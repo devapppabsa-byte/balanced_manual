@@ -1,0 +1,1 @@
+normas_comparacio.blade.php
