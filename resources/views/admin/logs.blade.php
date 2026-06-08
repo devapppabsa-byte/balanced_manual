@@ -95,11 +95,21 @@
                                 <small>Registro de actividades y movimientos del sistema</small>
                             </p>
                         </div>
-                        <div class="mt-2 mt-md-0">
+                        <div class="mt-2 mt-md-0 d-flex align-items-center gap-2">
                             <span class="badge bg-light text-dark border">
                                 <i class="fa-solid fa-list me-1"></i>
                                 {{ $logs->count() }} registros en esta página
                             </span>
+                            @if ($total_logs > 0)
+                                <form action="{{ route('logs.delete.all') }}" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar TODOS los logs del sistema? Esta acción no se puede deshacer.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="fa-solid fa-trash-can me-1"></i>
+                                        Borrar todos ({{ $total_logs }})
+                                    </button>
+                                </form>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -130,6 +140,9 @@
                                         </th>
                                         <th class="text-end pe-4" style="width: 180px;">
                                             <small class="text-muted fw-semibold text-uppercase">Fecha y Hora</small>
+                                        </th>
+                                        <th class="text-center" style="width: 60px;">
+                                            <small class="text-muted fw-semibold text-uppercase"></small>
                                         </th>
                                     </tr>
                                 </thead>
@@ -174,6 +187,8 @@
                                                         'update' => ['icon' => 'fa-edit', 'color' => 'warning', 'text' => 'Editar'],
                                                         'deleted' => ['icon' => 'fa-trash', 'color' => 'danger', 'text' => 'Eliminar'],
                                                         'start_session' => ['icon' => 'fa-right-to-bracket', 'color' => 'info', 'text' => 'Sesión'],
+                                                        'end_session' => ['icon' => 'fa-right-from-bracket', 'color' => 'secondary', 'text' => 'Cierre'],
+                                                        'login_client' => ['icon' => 'fa-user-lock', 'color' => 'info', 'text' => 'Cliente'],
                                                         'excel' => ['icon' => 'fa-file-excel', 'color' => 'success', 'text' => 'Excel'],
                                                     ];
                                                     $config = $accionConfig[$log->accion] ?? ['icon' => 'fa-circle', 'color' => 'secondary', 'text' => ucfirst($log->accion)];
@@ -192,6 +207,15 @@
                                                         {{ $log->created_at->format('H:i:s') }}
                                                     </small>
                                                 </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <form action="{{ route('logs.delete.one', $log) }}" method="POST" onsubmit="return confirm('¿Eliminar este registro de log?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-sm btn-link text-danger p-1" title="Eliminar log">
+                                                        <i class="fa-solid fa-xmark" style="font-size: 1.1rem;"></i>
+                                                    </button>
+                                                </form>
                                             </td>
                                         </tr>
                                     @endforeach

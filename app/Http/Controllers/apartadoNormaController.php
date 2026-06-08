@@ -210,81 +210,56 @@ public function registro_actividad_cumplimiento_norma(Request $request){
     //y si solo recorro los apartados que sten marcados como realizados
 
     
-    foreach($lista_apartados as $apartado){
+    foreach($lista_apartados as $apartado_id){
 
             //si el apartado es marcado como "Realizado"  busco a ver si tiene descripcion
-            if(in_array($apartado, $keys_descripciones)){
+            if(in_array($apartado_id, $keys_descripciones)){
 
-                 $descripcion = $request->descripcion[$apartado];
+                 $descripcion = $request->descripcion[$apartado_id];
                  $descripcion == null ? $descripcion = " No se cargo descripción de la actividad " : "";
 
-
-
-                if($request->evidencias != null){
-                    
-                    if(in_array($apartado, $keys_evidencias)){
-                        //se obtiene el el del cumplimiento creado
-                       $cumplimiento_norma = CumplimientoNorma::create([
-                       'mes'=> $mes,
-                       'descripcion' => $descripcion,
-                       'id_apartado_norma' => $apartado,
-                       'check' => $request->realizada[$apartado]
-                       ]);
-    
-                    }
-                }
-
-
-
-                else {
-                   CumplimientoNorma::create([
+                $cumplimiento = CumplimientoNorma::create([
                    'mes'=> $mes,
                    'descripcion' => $descripcion,
-                   'id_apartado_norma' => $apartado,
-                   'check' => $request->realizada[$apartado]
-                   ]);
-                }
+                   'id_apartado_norma' => $apartado_id,
+                   'check' => $request->realizada[$apartado_id]
+                ]);
 
+                if($request->evidencias != null && in_array($apartado_id, $keys_evidencias)){
 
-
-
-
-
-
-                if($request->evidencias != null){
-
-                    if(in_array($apartado, $keys_evidencias)){
-
-                        if($request->hasFile('evidencias')){
+                    if($request->hasFile('evidencias')){
+                        
+                        foreach($request->file('evidencias') as $id => $archivo){
                             
-                            foreach($request->file('evidencias') as $id => $archivo){
-                                
-                                if($archivo){
+                            if($archivo && $id == $apartado_id){
                                 $nombre = $archivo->getClientOriginalName(); 
                                 $path = $archivo->store('evidencias', 'public');
 
-                                    EvidenciaCumplimientoNorma::create([
-                                        'evidencia' => $path,
-                                        'nombre_archivo' => $nombre,
-                                        'id_cumplimiento_norma' => $cumplimiento_norma->id
-                                    ]);
-                                }
-
+                                EvidenciaCumplimientoNorma::create([
+                                    'evidencia' => $path,
+                                    'nombre_archivo' => $nombre,
+                                    'id_cumplimiento_norma' => $cumplimiento->id
+                                ]);
                             }
+
                         }
                     }
                 }
+
+                $apartado_obj = ApartadoNorma::find($apartado_id);
+                $nombre_apartado = $apartado_obj ? $apartado_obj->apartado : 'N/A';
+                $norma_obj = $apartado_obj ? Norma::find($apartado_obj->id_norma) : null;
+                $nombre_norma = $norma_obj ? $norma_obj->nombre : 'N/A';
+
+                LogBalanced::create([
+                    'autor' => $autor,
+                    'accion' => "add",
+                    'descripcion' => "Se registro cumplimiento normativo para el apartado: '{$nombre_apartado}' (ID: {$apartado_id}) de la norma: {$nombre_norma} (ID cumplimiento: {$cumplimiento->id})",
+                    'ip' => request()->ip() 
+                ]);
                 
             }
         }
-
-
-        // LogBalanced::create([
-        //     'autor' => $autor,
-        //     'accion' => "add",
-        //     'descripcion' => "Se registro cumplimiento normativo para el apartado: '{$apartado->apartado}' de la norma: {$norma_nombre} (ID cumplimiento: {$cumplimiento_norma->id})",
-        //     'ip' => request()->ip() 
-        // ]);
 
 
 

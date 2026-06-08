@@ -111,18 +111,18 @@
 
 
                         @empty
-                            <div class="col-12 p-5 text-center p-5 border">
-
-                                <div class="row">
-                                    
-                                    <div class="col-12">
-                                        <i class="fa fa-exclamation-circle text-danger"></i>
-                                        No cuenta hay contenido para mostrar
+                            <div class="col-12">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body text-center py-5">
+                                        <div class="mb-4">
+                                            <i class="fa-solid fa-comment-slash text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+                                        </div>
+                                        <h5 class="text-muted mb-2">No hay quejas o sugerencias</h5>
+                                        <p class="text-muted mb-0">
+                                            <small>Aún no se han registrado quejas o sugerencias en el sistema.</small>
+                                        </p>
                                     </div>
-                                    
                                 </div>
-                                <h5>
-                                </h5>
                             </div>
                         @endforelse
 

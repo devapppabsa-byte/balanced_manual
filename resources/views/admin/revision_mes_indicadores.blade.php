@@ -222,7 +222,19 @@
 
 
         @empty
-            
+            <div class="col-12 mt-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <div class="mb-4">
+                            <i class="fa-solid fa-chart-simple text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+                        </div>
+                        <h5 class="text-muted mb-2">No hay indicadores registrados</h5>
+                        <p class="text-muted mb-0">
+                            <small>Aún no se han creado indicadores o no hay datos para el período actual.</small>
+                        </p>
+                    </div>
+                </div>
+            </div>
         @endforelse
 
     </div>

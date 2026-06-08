@@ -245,6 +245,8 @@ Route::post('/perfil_admin/proveedores/', [proveedorController::class, 'proveedo
 
 
 Route::get('/perfil_admin/logs', [adminController::class, 'logs'])->name('logs.show.admin')->middleware("auth:admin");
+Route::delete('/perfil_admin/logs/borrar', [adminController::class, 'logs_delete_all'])->name('logs.delete.all')->middleware("auth:admin");
+Route::delete('/perfil_admin/logs/borrar/{log}', [adminController::class, 'logs_delete_one'])->name('logs.delete.one')->middleware("auth:admin");
 
 
 

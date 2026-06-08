@@ -306,11 +306,10 @@ public function indicador_index(Indicador $indicador){
 
 public function borrar_campo(Request $request, $campo, $tipo_campo){
 
+        $autor_log = 'Id: '.auth()->guard('admin')->user()->id.' - '.auth()->guard('admin')->user()->nombre .' - '. auth()->guard('admin')->user()->puesto;
         
         //vamos a buscar el id_input en la base de datos de los campos involucrados.
         $id_indicador = CampoInvolucrado::where('id_input',$request->id_input)->first();
-
-        //  return $id_indicador;
 
         if($id_indicador){
 
@@ -318,14 +317,20 @@ public function borrar_campo(Request $request, $campo, $tipo_campo){
 
         }
 
+        $nombre_campo = '';
 
-    
         if($tipo_campo == "calculado"){
             
             $campo_delete = CampoCalculado::findOrFail($campo);
             $nombre_campo = $campo_delete->nombre;
             $campo_delete->delete();
-            
+
+            LogBalanced::create([
+                'autor' => $autor_log,
+                'accion' => "deleted",
+                'descripcion' => "Se elimino el campo calculado: '{$nombre_campo}' del indicador",
+                'ip' => request()->ip()
+            ]);
 
             return back()->with("deleted", "El campo fue eliminado del indicador!.");
         }
@@ -337,7 +342,13 @@ public function borrar_campo(Request $request, $campo, $tipo_campo){
            $campo_delete = CampoVacio::findOrFail($campo);
            $nombre_campo = $campo_delete->nombre;
            $campo_delete->delete();
-           
+
+           LogBalanced::create([
+               'autor' => $autor_log,
+               'accion' => "deleted",
+               'descripcion' => "Se elimino el campo vacio: '{$nombre_campo}' del indicador",
+               'ip' => request()->ip()
+           ]);
            
            return back()->with("deleted", "El campo fue eliminado del indicador!.");
  
@@ -350,7 +361,13 @@ public function borrar_campo(Request $request, $campo, $tipo_campo){
             $campo_delete = CampoPrecargado::findOrFail($campo);
             $nombre_campo = $campo_delete->nombre;
             $campo_delete->delete();
-            
+
+            LogBalanced::create([
+                'autor' => $autor_log,
+                'accion' => "deleted",
+                'descripcion' => "Se elimino el campo precargado: '{$nombre_campo}' del indicador",
+                'ip' => request()->ip()
+            ]);
             
             return back()->with("deleted", "El campo fue eliminado del indicador");
 
@@ -363,6 +380,12 @@ public function borrar_campo(Request $request, $campo, $tipo_campo){
             $nombre_campo = $campo_delete->nombre;
             $campo_delete->delete();
 
+            LogBalanced::create([
+                'autor' => $autor_log,
+                'accion' => "deleted",
+                'descripcion' => "Se elimino el campo: '{$nombre_campo}' del indicador por id_input",
+                'ip' => request()->ip()
+            ]);
             
             return back()->with("deleted", "El campo fue eliminado del indicador");         
 
@@ -379,12 +402,14 @@ public function borrar_campo(Request $request, $campo, $tipo_campo){
 
 
 
-
 public function editar_campo(Request $request, $campo, $tipo_campo){
+
+    $autor_log = 'Id: '.auth()->guard('admin')->user()->id.' - '.auth()->guard('admin')->user()->nombre .' - '. auth()->guard('admin')->user()->puesto;
     
     if($tipo_campo == "precargado"){
 
         $precargado = CampoPrecargado::findOrFail($campo);
+        $old_unidad = $precargado->unidad_medida;
         $precargado->unidad_medida = $request->unidad_medida;
         $precargado->update();
 
@@ -404,6 +429,12 @@ public function editar_campo(Request $request, $campo, $tipo_campo){
                 'unidad_medida' => $request->unidad_medida
         ]);
 
+        LogBalanced::create([
+            'autor' => $autor_log,
+            'accion' => "update",
+            'descripcion' => "Se edito el campo precargado: '{$precargado->nombre}' - Unidad: '{$old_unidad}' -> '{$request->unidad_medida}'",
+            'ip' => request()->ip()
+        ]);
 
         return back()->with('editado', 'El campo fue editado');
 
@@ -416,6 +447,7 @@ public function editar_campo(Request $request, $campo, $tipo_campo){
     if($tipo_campo == "vacio"){
 
         $vacio = CampoVacio::findOrFail($campo);
+        $old_unidad = $vacio->unidad_medida;
         $vacio->unidad_medida = $request->unidad_medida;
         $vacio->update();
         
@@ -434,7 +466,13 @@ public function editar_campo(Request $request, $campo, $tipo_campo){
                 'unidad_medida' => $request->unidad_medida
         ]);
 
-        
+        LogBalanced::create([
+            'autor' => $autor_log,
+            'accion' => "update",
+            'descripcion' => "Se edito el campo vacio: '{$vacio->nombre}' - Unidad: '{$old_unidad}' -> '{$request->unidad_medida}'",
+            'ip' => request()->ip()
+        ]);
+
         return back()->with('editado', 'El campo fue editado');
 
     }
@@ -442,11 +480,12 @@ public function editar_campo(Request $request, $campo, $tipo_campo){
 
 
 
+
     if($tipo_campo == "calculado"){
 
 
-        
         $calculado = CampoCalculado::findOrFail($campo);
+        $old_unidad = $calculado->unidad_medida;
         $calculado->unidad_medida = $request->unidad_medida;
         $calculado->update();
 
@@ -465,13 +504,16 @@ public function editar_campo(Request $request, $campo, $tipo_campo){
                 'unidad_medida' => $request->unidad_medida
         ]);
 
-
-
+        LogBalanced::create([
+            'autor' => $autor_log,
+            'accion' => "update",
+            'descripcion' => "Se edito el campo calculado: '{$calculado->nombre}' - Unidad: '{$old_unidad}' -> '{$request->unidad_medida}'",
+            'ip' => request()->ip()
+        ]);
 
         return back()->with('editado', 'El campo fue editado');
     
     }
-
 
 
 
@@ -1071,6 +1113,13 @@ public function input_porcentaje_guardar(Request $request, Indicador $indicador)
     }
 
 
+
+    LogBalanced::create([
+        'autor' => $autor_log,
+        'accion' => "add",
+        'descripcion' => "Se agrego campo calculado de porcentaje: '{$campo_calculado->nombre}' al indicador (ID: {$indicador->id})",
+        'ip' => request()->ip()
+    ]);
 
     return back()->with("success", "El campo de porcentaje ha sido creado");
 
@@ -2115,7 +2164,6 @@ foreach($inputs_precargados as $index_precargados => $precargado){
         //Desde aqui se guarda el campo del comentario
 
 
-
         //Se agregan las metas del indicador que se tienen al momento de rellenar este mismo
 
 
@@ -2127,6 +2175,14 @@ foreach($inputs_precargados as $index_precargados => $precargado){
 
         ]);
 
+        $autor = 'Id: '.auth()->user()->id.' - '.auth()->user()->name.' - '.auth()->user()->puesto;
+
+        LogBalanced::create([
+            'autor' => $autor,
+            'accion' => "add",
+            'descripcion' => "Se lleno la informacion del indicador: '{$indicador->nombre}' (ID: {$indicador->id}, Movimiento: {$id_movimiento}) por el usuario: {$nombre_usuario}",
+            'ip' => request()->ip()
+        ]);
 
         
         return back()->with('success', 'El indicador fue rellenado ');
@@ -2138,7 +2194,19 @@ foreach($inputs_precargados as $index_precargados => $precargado){
 
 public function borrar_info_indicador($id){
 
+    $autor = 'Id: '.auth()->user()->id.' - '.auth()->user()->name.' - '.auth()->user()->puesto;
+
+    $indicador_lleno = IndicadorLleno::where('id_movimiento', $id)->first();
+    $nombre_indicador = $indicador_lleno ? $indicador_lleno->nombre_campo : 'N/A';
+
     IndicadorLleno::where('id_movimiento', $id)->delete();
+
+    LogBalanced::create([
+        'autor' => $autor,
+        'accion' => "deleted",
+        'descripcion' => "Se elimino informacion del indicador (Movimiento: {$id}, Campo: {$nombre_indicador})",
+        'ip' => request()->ip()
+    ]);
 
     return back()->with('deleted', 'La información fue removida.');
 
@@ -2149,8 +2217,9 @@ public function borrar_info_indicador($id){
 
 public function indicador_foraneo_store(Departamento $departamento, Request $request){
 
+    $autor_log = 'Id: '.auth()->guard('admin')->user()->id.' - '.auth()->guard('admin')->user()->nombre .' - '. auth()->guard('admin')->user()->puesto;
 
-
+    $nombres = [];
     foreach($request->indicador_foraneo as $indicador_foraneo){
 
         AuxIndicadorForaneo::create([
@@ -2158,8 +2227,16 @@ public function indicador_foraneo_store(Departamento $departamento, Request $req
             "id_indicador" => $indicador_foraneo
         ]);
 
+        $ind = Indicador::find($indicador_foraneo);
+        if($ind) $nombres[] = $ind->nombre;
     }
 
+    LogBalanced::create([
+        'autor' => $autor_log,
+        'accion' => "add",
+        'descripcion' => "Se agregaron indicadores foraneos al departamento '{$departamento->nombre}': ".implode(", ", $nombres),
+        'ip' => request()->ip()
+    ]);
 
     return back()->with('success', 'Se agrego el indicador foraneo correctamen!');
 
@@ -2168,11 +2245,17 @@ public function indicador_foraneo_store(Departamento $departamento, Request $req
 
 
 public function eliminar_indicador_foraneo(Departamento $departamento, Indicador $indicador){
-    
 
+    $autor_log = 'Id: '.auth()->guard('admin')->user()->id.' - '.auth()->guard('admin')->user()->nombre .' - '. auth()->guard('admin')->user()->puesto;
 
     AuxIndicadorForaneo::where('id_departamento', $departamento->id)->where('id_indicador', $indicador->id)->delete();
 
+    LogBalanced::create([
+        'autor' => $autor_log,
+        'accion' => "deleted",
+        'descripcion' => "Se elimino el indicador foraneo: '{$indicador->nombre}' (ID: {$indicador->id}) del departamento: {$departamento->nombre}",
+        'ip' => request()->ip()
+    ]);
 
     return back()->with('success', 'Indicador de solo lectura fue eliminado!');
 

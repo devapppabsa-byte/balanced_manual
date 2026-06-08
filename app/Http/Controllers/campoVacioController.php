@@ -43,7 +43,13 @@ public function agregar_campo_vacio(Request $request,Indicador $indicador){
         
     ]);
 
-    
+    LogBalanced::create([
+        'autor' => 'Id: '.auth()->guard('admin')->user()->id.' - '.auth()->guard('admin')->user()->nombre .' - '. auth()->guard('admin')->user()->puesto,
+        'accion' => "add",
+        'descripcion' => "Se agrego campo vacio: '{$request->nombre_campo_vacio}' al indicador (ID: {$indicador->id})",
+        'ip' => request()->ip()
+    ]);
+
     return back()->with('success', 'El campo vacio fue agregado al indicador');        
 
 }

@@ -73,19 +73,22 @@ class clienteController extends Controller
 
     public function index_cliente(Request $request){
 
-    
-
         $request->validate([
             'email' => 'required',
             'password' => 'required'
         ]);
 
-        
-        
         $credentials = $request->only('email', 'password');
 
         if(Auth::guard('cliente')->attempt($credentials)){
             $request->session()->regenerate();
+            $cliente = Auth::guard('cliente')->user();
+            LogBalanced::create([
+                'autor' => 'Id: '.$cliente->id.' - '.$cliente->nombre,
+                'accion' => "login_client",
+                'descripcion' => "El cliente: '{$cliente->nombre}' (ID: {$cliente->id}) inicio sesion",
+                'ip' => $request->ip()
+            ]);
             return redirect()->route('perfil.cliente');
         }
 

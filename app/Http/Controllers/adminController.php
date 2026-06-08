@@ -389,10 +389,47 @@ $departamentos = Departamento::get();
 
     public function logs(){
 
-
+        $total_logs = LogBalanced::count();
         $logs = LogBalanced::orderBy('created_at', 'desc' )->simplePaginate(10);
 
-        return view('admin.logs', compact('logs'));
+        return view('admin.logs', compact('logs', 'total_logs'));
+
+    }
+
+    public function logs_delete_all(){
+
+        $autor = 'Id: '.auth()->guard('admin')->user()->id.' - '.auth()->guard('admin')->user()->nombre .' - '. auth()->guard('admin')->user()->puesto;
+        $total = LogBalanced::count();
+
+        LogBalanced::truncate();
+
+        LogBalanced::create([
+            'autor' => $autor,
+            'accion' => "deleted",
+            'descripcion' => "Se eliminaron todos los logs del sistema ({$total} registros)",
+            'ip' => request()->ip()
+        ]);
+
+        return back()->with('success', 'Todos los logs fueron eliminados correctamente.');
+
+    }
+
+    public function logs_delete_one(LogBalanced $log){
+
+        $autor = 'Id: '.auth()->guard('admin')->user()->id.' - '.auth()->guard('admin')->user()->nombre .' - '. auth()->guard('admin')->user()->puesto;
+        $log_id = $log->id;
+        $descripcion_log = $log->descripcion;
+
+        $log->delete();
+
+        LogBalanced::create([
+            'autor' => $autor,
+            'accion' => "deleted",
+            'descripcion' => "Se elimino el log ID #{$log_id}: '{$descripcion_log}'",
+            'ip' => request()->ip()
+        ]);
+
+        return back()->with('success', 'El log fue eliminado correctamente.');
 
     }
 

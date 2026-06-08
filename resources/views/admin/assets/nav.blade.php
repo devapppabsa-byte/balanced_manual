@@ -137,21 +137,16 @@
     </div>
 
 
-    @auth
-    
-        @if (Auth::guard('admin')->user()->email === 'arturo.resendiz@grupopabsa.com')
-            <div class="col-auto">
-                <a href="{{ route('logs.show.admin') }}"
-                class="admin-link {{ request()->routeIs('logs.show.admin') ? 'active' : '' }}">
-                    <i class="fa-solid fa-book"></i>
-                    <span>Logs</span>
-                </a>
-            </div>
+
+    <div class="col-auto">
+        <a href="{{ route('logs.show.admin') }}"
+        class="admin-link {{ request()->routeIs('logs.show.admin') ? 'active' : '' }}">
+            <i class="fa-solid fa-book"></i>
+            <span>Logs</span>
+        </a>
+    </div>
             
-        @else
-            
-        @endif
-    @endauth
+
 
 
 

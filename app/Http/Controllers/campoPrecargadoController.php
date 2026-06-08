@@ -85,6 +85,13 @@ class campoPrecargadoController extends Controller
 
 
 
+        LogBalanced::create([
+            'autor' => $autor_log,
+            'accion' => "add",
+            'descripcion' => "Se agrego campo precargado: '{$nombre}' al indicador (ID: {$indicador->id})",
+            'ip' => request()->ip()
+        ]);
+
         return back()->with('success', 'El campo fue agregado!');
 
 

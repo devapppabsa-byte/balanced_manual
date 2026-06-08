@@ -492,6 +492,7 @@ $meses = collect()
 
     public function evaluacion_servicio_store(User $user, Request $request){
 
+        $autor = 'Id: '.auth()->user()->id.' - '.auth()->user()->name.' - '.auth()->user()->puesto;
 
         $request->validate([
             'descripcion_servicio' => 'required',
@@ -500,6 +501,9 @@ $meses = collect()
         ]);
 
         $fecha = Carbon::now()->locale('es')->translatedFormat('l j \\d\\e F \\d\\e Y');
+
+        $proveedor = Proveedor::find($request->proveedor);
+        $nombre_proveedor = $proveedor ? $proveedor->nombre : 'N/A';
 
         EvaluacionProveedor::create([
 
@@ -512,6 +516,12 @@ $meses = collect()
 
         ]);
 
+        LogBalanced::create([
+            'autor' => $autor,
+            'accion' => "add",
+            'descripcion' => "Se agrego evaluacion al proveedor: '{$nombre_proveedor}' con calificacion: {$request->calificacion}",
+            'ip' => request()->ip()
+        ]);
 
         return back()->with('success', 'La evaluación fue agregada');
 
@@ -652,6 +662,15 @@ $meses = collect()
 
     public function cerrar_session(Request $request){
 
+        $autor = 'Id: '.auth()->user()->id.' - '.auth()->user()->name.' - '.auth()->user()->puesto;
+
+        LogBalanced::create([
+            'autor' => $autor,
+            'accion' => "end_session",
+            'descripcion' => "El usuario: '{$autor}' cerro sesion",
+            'ip' => request()->ip()
+        ]);
+
         Auth::logout();
 
         $request->session()->invalidate();
@@ -664,6 +683,15 @@ $meses = collect()
 
 
     public function cerrar_session_cliente(Request $request){
+
+    $autor = 'Id: '.auth()->guard('cliente')->user()->id.' - '.auth()->guard('cliente')->user()->nombre;
+
+    LogBalanced::create([
+        'autor' => $autor,
+        'accion' => "end_session",
+        'descripcion' => "El cliente: '{$autor}' cerro sesion",
+        'ip' => request()->ip()
+    ]);
 
     Auth::logout();
 
