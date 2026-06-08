@@ -62,7 +62,11 @@
                             <small>Gestión de clientes de la empresa</small>
                         </p>
                     </div>
-                    <div class="mt-2 mt-md-0">
+                    <div class="mt-2 mt-md-0 d-flex gap-2">
+                        <button class="btn btn-danger" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#deleteAllClientes">
+                            <i class="fa-solid fa-trash me-2"></i>
+                            Borrar todos
+                        </button>
                         <button class="btn btn-primary" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#agregar_cliente">
                             <i class="fa-solid fa-plus-circle me-2"></i>
                             Agregar Cliente
@@ -743,7 +747,41 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-
-
+<div class="modal fade" id="deleteAllClientes" tabindex="-1" aria-labelledby="deleteAllClientesLabel" aria-hidden="true" data-mdb-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white border-0 py-3">
+                <h5 class="modal-title fw-bold" id="deleteAllClientesLabel">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                    Eliminar todos los clientes
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <div class="text-center mb-4">
+                    <div class="mb-3">
+                        <i class="fa-solid fa-trash text-danger" style="font-size: 3rem;"></i>
+                    </div>
+                    <h6 class="fw-semibold">¿Estás seguro de eliminar todos los clientes?</h6>
+                    <small class="text-muted d-block mt-2">
+                        Esta acción eliminará todos los clientes registrados y no se puede deshacer.
+                    </small>
+                </div>
+                <form action="{{route('eliminar.todos.clientes')}}" method="POST">
+                    @csrf @method('DELETE')
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary flex-fill" data-mdb-ripple-init data-mdb-dismiss="modal">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-danger flex-fill" data-mdb-ripple-init>
+                            <i class="fa-solid fa-trash me-2"></i>
+                            Eliminar todo
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 @endsection

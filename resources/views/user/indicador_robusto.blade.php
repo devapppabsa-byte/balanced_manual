@@ -183,7 +183,7 @@
 
 
 
-@if ($carga_excel !== $ahora  || $carga_indicador === $ahora)
+{{-- @if ($carga_excel !== $ahora  || $carga_indicador === $ahora)
 
     @if ($carga_indicador === $ahora)
 
@@ -210,7 +210,20 @@
         Llenar indicador del mes
     </button>
 
-@endif
+@endif 
+
+
+TODO ESTE CODIGO COMENTADO ES DE LA RESTRICCION DEL LLENADO DE INDICADORES
+
+--}}
+
+
+
+    <button class="btn btn-success flotante rounded btn-lg p-3" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#llenado_indicadores">
+        <i class="fa fa-edit"></i>
+        Llenar indicador del mes
+    </button>
+
 
 
 
@@ -226,6 +239,8 @@
                 <form id="formulario_llenado_indicadores" method="POST" action="{{route('llenado.informacion.indicadores', $indicador->id)}}" class="row gap-4 p-2 justify-content-center form-loader">
                     @csrf
                     @forelse ($campos_vacios as $campo_vacio)
+
+
 
                     <div class="col-11 col-sm-11 col-md-4 col-lg-3 mb-4">
 
@@ -268,7 +283,15 @@
 
 
                     @if (!$campos_vacios->isEmpty() )
-                        <div class="col-12 bg-light p-3 rounded ql-toolbar">
+                              
+                    
+                    <div class="col-12">
+                            <div class="form-group">
+                                <input type="date" name="fecha_periodo"  class="form-control">
+                            </div>
+                      </div>
+                    
+                    <div class="col-12 bg-light p-3 rounded ql-toolbar">
                             <label> <i class="fa fa-table"></i> Información extra para el Indicador: </label>
 
                         <div class="form-group">
@@ -493,25 +516,44 @@
                 <i class="fa fa-trash"></i> 
             </button>
 
-            <div class="modal fade" id="e{{$campo_lleno->id_movimiento}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-mdb-backdrop="static">
-                <div class="modal-dialog modal-lg modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header bg-danger text-white">
-                            <h2>¿Eliminar Registro?</h2>
+            <div class="modal fade" id="e{{$campo_lleno->id_movimiento}}" tabindex="-1" aria-labelledby="eliminarRegistroLabel{{$campo_lleno->id_movimiento}}" aria-hidden="true" data-mdb-backdrop="static">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg">
+                        <div class="modal-header bg-danger text-white border-0 py-3">
+                            <h5 class="modal-title fw-bold" id="eliminarRegistroLabel{{$campo_lleno->id_movimiento}}">
+                                <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                                Confirmar Eliminación
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="modal-body">
+                        <div class="modal-body py-4">
+                            <div class="text-center mb-4">
+                                <div class="mb-3">
+                                    <i class="fa-solid fa-trash text-danger" style="font-size: 3rem;"></i>
+                                </div>
+                                <h6 class="fw-semibold">¿Estás seguro de eliminar este registro?</h6>
+                                <p class="text-muted mb-0">
+                                    <strong>{{$campo_lleno->nombre_campo}}</strong>
+                                </p>
+                                <small class="text-muted d-block mt-2">
+                                    Esta acción no se puede deshacer.
+                                </small>
+                            </div>
                             <form action="{{route('borrar.info.indicador', $campo_lleno->id_movimiento)}}" method="POST">
                                 @csrf @method('DELETE')
-                                <h2>
-                                    <button class="btn btn-danger w-100 py-3">
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-outline-secondary flex-fill" data-mdb-ripple-init data-mdb-dismiss="modal">
+                                        Cancelar
+                                    </button>
+                                    <button type="submit" class="btn btn-danger flex-fill" data-mdb-ripple-init>
+                                        <i class="fa-solid fa-trash me-2"></i>
                                         Eliminar
                                     </button>
-                                </h2>
+                                </div>
                             </form>
                         </div>
                     </div>
                 </div>
-
             </div>
 
             
@@ -1324,11 +1366,18 @@
         @else
 
         <div class="row justify-content-center">
-            <div class="col-10 bg-white p-4 mt-4">
-                <h1 class="text-center my-4">
-                    <i class="fa fa-exclamation-circle text-danger"></i>
-                    No hay suficientes datos para analizar
-                </h1>
+            <div class="col-10 col-md-8 col-lg-6 mt-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <div class="mb-4">
+                            <i class="fa-solid fa-chart-line text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+                        </div>
+                        <h5 class="text-muted mb-2">No hay suficientes datos para analizar</h5>
+                        <p class="text-muted mb-0">
+                            <small>El indicador no cuenta con la información necesaria para generar un análisis. Espera a que se registren más datos.</small>
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
 

@@ -325,47 +325,34 @@ ClassicEditor
 
     {{-- notificaciones de todo --}}
 
-
-
-
-    {{-- Esto hace que el tab-panel se regrese al lugar donde lo dejaste despues de cargar la pagina --}}
+    {{-- Persistencia de tabs por URL hash --}}
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         const tabLinks = document.querySelectorAll('[data-mdb-tab-init]');
         const tabContent = document.getElementById('ex1-content');
+        const hash = window.location.hash;
 
-        const savedTab = localStorage.getItem('activeTab');
-
-        if (savedTab) {
-            const tabTrigger = document.querySelector(`[href="${savedTab}"]`);
+        if (hash) {
+            const tabTrigger = document.querySelector(`[href="${hash}"]`);
             if (tabTrigger) {
-                // Primero activamos la tab visualmente
-                document.querySelectorAll('.nav-link').forEach(link => {
-                    link.classList.remove('active');
-                });
+                document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
                 tabTrigger.classList.add('active');
-                
-                // Activamos el contenido correspondiente
-                document.querySelectorAll('.tab-pane').forEach(pane => {
-                    pane.classList.remove('show', 'active');
-                });
-                const targetPane = document.querySelector(savedTab);
-                if (targetPane) {
-                    targetPane.classList.add('show', 'active');
-                }
+                document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('show', 'active'));
+                const targetPane = document.querySelector(hash);
+                if (targetPane) targetPane.classList.add('show', 'active');
             }
         }
 
-        // Mostrar contenido una vez listo
-        tabContent.classList.remove('d-none');
+        if (tabContent) tabContent.classList.remove('d-none');
 
         tabLinks.forEach(tab => {
             tab.addEventListener('shown.mdb.tab', e => {
-                localStorage.setItem('activeTab', e.target.getAttribute('href'));
+                history.replaceState(null, '', e.target.getAttribute('href'));
             });
         });
     });
     </script>
+
 
 
 

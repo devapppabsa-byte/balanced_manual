@@ -1427,11 +1427,13 @@ OS --}}
                     
                    
                     <h6 class="my-0">Total (Cantidad sobre la que se va a comparar)</h6>                    
-                    <div class="row mx-2 bg-light p-3 pb-5 border" ondrop="dropPorcentaje(event)" ondragover="allowDropPorcentaje(event)" id="parte_container">
-                    </div>
-                    
-                    <h6 class="my-0">Parte (Cantidad a comparar)</h6>
                     <div class="row mx-2 bg-light p-3 pb-5 mt-1 border" ondrop="dropPorcentaje(event)" ondragover="allowDropPorcentaje(event)" id="total_container">
+                </div>
+                
+                <h6 class="my-0">Parte (Cantidad a comparar)</h6>
+                        <div class="row mx-2 bg-light p-3 pb-5 border" ondrop="dropPorcentaje(event)" ondragover="allowDropPorcentaje(event)" id="parte_container">
+                
+
                     </div>
                     
                 </form>

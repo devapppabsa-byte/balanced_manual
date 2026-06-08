@@ -82,6 +82,7 @@ Route::post('/perfil_admin/agregar_cliente', [adminController::class, 'agregar_c
 
 
 Route::delete('/perfil_admin/eliminar_cliente/{cliente}', [adminController::class, 'eliminar_cliente'])->name('eliminar.cliente')->middleware('auth:admin');
+Route::delete('/perfil_admin/eliminar_todos_clientes', [adminController::class, 'eliminar_todos_clientes'])->name('eliminar.todos.clientes')->middleware('auth:admin');
 
 
 Route::patch('/perfil_admin/editar_cliente/{cliente}', [adminController::class, 'editar_cliente'])->name('editar.cliente')->middleware('auth:admin');
@@ -202,11 +203,14 @@ Route::get('/perfil_admin/proveedores', [proveedorController::class, 'proveedore
 
 
 Route::delete('/perfil_admin/proveedores/eliminar/{proveedor}', [proveedorController::class, 'proveedor_delete']  )->name('proveedor.delete')->middleware('auth:admin');
+Route::delete('/perfil_admin/proveedores/eliminar_todos', [proveedorController::class, 'proveedor_delete_all'])->name('proveedor.delete.all')->middleware('auth:admin');
 
 
 Route::get('/perfil_admin/proveedores/detalle_evaluacion/{proveedor}', [evaluacionProveedorController::class, 'detalle_evaluacion_proveedor'])->name('detalle.evaluacion.proveedor')->middleware('auth:admin');
 
 Route::get('/perfil_admin/informacion_foranea', [informacionForaneaController::class, 'informacion_foranea_show_admin'])->name('informacion.foranea.show.admin')->middleware('auth:admin');
+Route::delete('/perfil_admin/informacion_foranea/borrar/{campoForaneo}', [informacionForaneaController::class, 'destroy'])->name('informacion.foranea.delete')->middleware('auth:admin');
+Route::delete('/perfil_admin/informacion_foranea/borrar_todo', [informacionForaneaController::class, 'destroyAll'])->name('informacion.foranea.delete.all')->middleware('auth:admin');
 
 Route::get('/perfil_admin/encuestas/respuestas_clientes/{cliente}/{encuesta}', [clienteController::class, 'show_respuestas'])->name('show.respuestas')->middleware('auth:admin');
 

@@ -240,31 +240,22 @@
                                                        title="Ver detalles">
                                                         <i class="fa-solid fa-eye"></i>
                                                     </a>
-                                                    @if (!$encuesta->tiene_respuestas)
-                                                        <button class="btn btn-sm btn-outline-primary" 
-                                                                data-mdb-tooltip-init 
-                                                                title="Editar {{$encuesta->nombre}}" 
-                                                                data-mdb-ripple-init 
-                                                                data-mdb-modal-init 
-                                                                data-mdb-target="#edit_en{{$encuesta->id}}">
-                                                            <i class="fa-solid fa-edit"></i>
-                                                        </button>
-                                                        <button class="btn btn-sm btn-outline-danger" 
-                                                                data-mdb-tooltip-init 
-                                                                title="Eliminar {{$encuesta->nombre}}" 
-                                                                data-mdb-ripple-init 
-                                                                data-mdb-modal-init 
-                                                                data-mdb-target="#del_en{{$encuesta->id}}">
-                                                            <i class="fa-solid fa-trash"></i>
-                                                        </button>
-                                                    @else
-                                                        <button class="btn btn-sm btn-outline-secondary" 
-                                                                disabled
-                                                                data-mdb-tooltip-init 
-                                                                title="La encuesta ya fue contestada, no se puede editar ni eliminar.">
-                                                            <i class="fa-solid fa-lock"></i>
-                                                        </button>
-                                                    @endif
+                                                    <button class="btn btn-sm btn-outline-primary" 
+                                                            data-mdb-tooltip-init 
+                                                            title="Editar {{$encuesta->nombre}}" 
+                                                            data-mdb-ripple-init 
+                                                            data-mdb-modal-init 
+                                                            data-mdb-target="#edit_en{{$encuesta->id}}">
+                                                        <i class="fa-solid fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger" 
+                                                            data-mdb-tooltip-init 
+                                                            title="Eliminar {{$encuesta->nombre}}" 
+                                                            data-mdb-ripple-init 
+                                                            data-mdb-modal-init 
+                                                            data-mdb-target="#del_en{{$encuesta->id}}">
+                                                        <i class="fa-solid fa-trash"></i>
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>

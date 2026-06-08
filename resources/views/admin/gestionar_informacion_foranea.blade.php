@@ -74,6 +74,13 @@
             </a>
         </div>
 
+        <div class="col-12 col-sm-12 col-md-4 col-lg-3 my-1">
+            <button class="btn btn-sm btn-danger w-100" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#deleteAllForanea">
+                <i class="fa-solid fa-trash me-1"></i>
+                Borrar todos
+            </button>
+        </div>
+
 
 
     </div>
@@ -100,9 +107,11 @@
 
                 @forelse ($informacion_foranea as $index_foranea => $foranea)
 
-                    <div class="col-12 col-sm-12 col-md-5  col-lg-3  mx-3 my-2 text-center py-4  rounded shadow-sm border " data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#info{{$foranea->id}}" style="cursor: pointer">
-                        <h4 class="text-dark" >{{$foranea->nombre}}</h4>
-                        <small><b> Ultima actualizacion: </b>{{$foranea->updated_at->locale('es')->translatedFormat('d F Y')}}</small>
+                    <div class="col-12 col-sm-12 col-md-5  col-lg-3  mx-3 my-2 text-center py-4  rounded shadow-sm border" style="cursor: pointer">
+                        <div data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#info{{$foranea->id}}">
+                            <h4 class="text-dark" >{{$foranea->nombre}}</h4>
+                            <small><b> Ultima actualizacion: </b>{{$foranea->updated_at->locale('es')->translatedFormat('d F Y')}}</small>
+                        </div>
                     </div>
 
 
@@ -142,9 +151,6 @@
                             </div>
                         </div>
                     </div>
-
-
-
 
                 @empty
                     <div class="col-12 text-center">
@@ -310,8 +316,42 @@
 </div>
 
 
-@endsection
-
+<div class="modal fade" id="deleteAllForanea" tabindex="-1" aria-labelledby="deleteAllForaneaLabel" aria-hidden="true" data-mdb-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white border-0 py-3">
+                <h5 class="modal-title fw-bold" id="deleteAllForaneaLabel">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                    Eliminar toda la información foránea
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <div class="text-center mb-4">
+                    <div class="mb-3">
+                        <i class="fa-solid fa-trash text-danger" style="font-size: 3rem;"></i>
+                    </div>
+                    <h6 class="fw-semibold">¿Estás seguro de eliminar todos los registros?</h6>
+                    <small class="text-muted d-block mt-2">
+                        Esta acción eliminará toda la información foránea y no se puede deshacer.
+                    </small>
+                </div>
+                <form action="{{route('informacion.foranea.delete.all')}}" method="POST">
+                    @csrf @method('DELETE')
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary flex-fill" data-mdb-ripple-init data-mdb-dismiss="modal">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-danger flex-fill" data-mdb-ripple-init>
+                            <i class="fa-solid fa-trash me-2"></i>
+                            Eliminar todo
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section('scripts')
 <script>

@@ -4,7 +4,16 @@
 
 
 @section('contenido')
-
+    @if ($ponderacion != 100)
+        <div class="row bg-danger"  >
+            <div class="col-12 text-white d-flex align-item-center">
+                <h5>    
+                    <i class="fa fa-warning text-white"></i>
+                    La suma de la ponderación de los indicadores es: <b class="badge badge-warning text-danger rounded-pill ">%{{$ponderacion}}</b>
+                </h5>
+            </div>
+        </div>
+    @endif
 <div class="container-fluid sticky-top">
     <div class="row bg-primary  d-flex align-items-center">
         <div class="col-12 col-sm-12 col-md-6 col-lg-10  pt-2 text-white">
@@ -133,17 +142,6 @@
             </div>
         </div>
     </div>
-
-    @if ($ponderacion != 100)
-        <div class="row"  style="background-color: rgb(199, 53, 53)">
-            <div class="col-12 text-white ">
-                <span>    
-                    <i class="fa fa-warning text-white"></i>
-                    La suma de la ponderación de los indicadores es: <b class="badge badge-warning text-danger rounded-pill ">%{{$ponderacion}}</b>
-                </span>
-            </div>
-        </div>
-    @endif
 
 </div>
 

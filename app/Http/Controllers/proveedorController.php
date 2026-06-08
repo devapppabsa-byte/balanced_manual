@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Proveedor;
+use App\Models\EvaluacionProveedor;
 use App\Models\LogBalanced;
+use Illuminate\Support\Facades\DB;
 
 class proveedorController extends Controller
 {
@@ -77,17 +79,34 @@ class proveedorController extends Controller
         }
 
         return redirect()->back()->with('error', 'Ocurrió un error inesperado al intentar eliminar el proveedor.');
+        }
     }
 
+    public function proveedor_delete_all(){
 
-        
+        $autor = 'Id: '.auth()->guard('admin')->user()->id.' - '.auth()->guard('admin')->user()->nombre .' - '. auth()->guard('admin')->user()->puesto;
 
+        $total = Proveedor::count();
 
-       
+        if ($total > 0) {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            EvaluacionProveedor::truncate();
+            Proveedor::truncate();
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
+            LogBalanced::create([
+                'autor' => $autor,
+                'accion' => "deleted",
+                'descripcion' => "Se eliminaron todos los proveedores ({$total} registros)",
+                'ip' => request()->ip()
+            ]);
+        }
+
+        return back()->with("eliminado", "Todos los proveedores fueron eliminados!");
 
     }
-
-
 
 }
+
+
+

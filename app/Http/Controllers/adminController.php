@@ -433,9 +433,27 @@ $departamentos = Departamento::get();
 
     }
 
+    public function eliminar_todos_clientes(){
 
+        $autor = 'Id: '.auth()->guard('admin')->user()->id.' - '.auth()->guard('admin')->user()->nombre .' - '. auth()->guard('admin')->user()->puesto;
 
+        $total = Cliente::count();
 
+        if ($total > 0) {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            Cliente::truncate();
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
+            LogBalanced::create([
+                'autor' => $autor,
+                'accion' => "deleted",
+                'descripcion' => "Se eliminaron todos los clientes ({$total} registros)",
+                'ip' => request()->ip()
+            ]);
+        }
+
+        return back()->with("eliminado", "Todos los clientes fueron eliminados!");
+
+    }
 
 }

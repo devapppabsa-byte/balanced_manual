@@ -1736,7 +1736,8 @@ public function llenado_informacion_indicadores(Indicador $indicador, Request $r
 
     
     //fechas usadas para el llenado de indicadores del año ´pasado:
-    $fecha_periodo = Carbon::now()->subMonth();
+   $fecha_periodo = Carbon::now()->subMonth();
+    $fecha_periodo = Carbon::parse($request->fecha_periodo);
    // $created_at = Carbon::parse($request->fecha_periodo)->addMonth();
 
 
@@ -3434,8 +3435,15 @@ else{
             
         }
 
-        $campos_llenos = IndicadorLleno::where('id_movimiento', $ultimo_mes->id_movimiento)->get();
-        //Aqui va a ir el codigo que me permite consultar los datos del ultimo mes
+        if(isset($ultimo_mes->id_movimiento)){
+            $campos_llenos = IndicadorLleno::where('id_movimiento', $ultimo_mes->id_movimiento)->get();
+            //Aqui va a ir el codigo que me permite consultar los datos del ultimo mes
+
+        }
+        else{
+            return back()->with("error", "No hya información del indicador para mostrar");
+        }
+
 
 
 
