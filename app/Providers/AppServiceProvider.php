@@ -27,5 +27,10 @@ class AppServiceProvider extends ServiceProvider
         if (str_contains(request()->getHost(), 'ngrok')) {
             URL::forceScheme('https');
         }
+
+         if (app()->environment('production')) {
+        URL::forceScheme('https');
+    }
+
     }
 }
