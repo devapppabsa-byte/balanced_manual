@@ -429,26 +429,42 @@
 OS --}}
 
 @foreach ($campos_calculados as $campo_calculado)
-    <div class="modal fade" id="delcal{{$campo_calculado->id}}" tabindex="-1"  aria-labelledby="exampleMddodalLabel" aria-hidden="true" data-mdb-backdrop="static">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-            <div class="modal-header bg-danger py-4">
-                <h3 class="text-white" id="exampleModalLabel">¿Eliminar a {{$campo_calculado->nombre}} ?</h3>
-                <button type="button" class="btn-close" data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body py-4">
-
-                <form action="{{route('eliminar.campo', [$campo_calculado->id, 'calculado'])}}" method="POST">
-                    @csrf @method('DELETE')
-                    
-                    <button  class="btn btn-danger w-100 py-3" data-mdb-ripple-init>
-                        <h6>Eliminar</h6>
-                    </button>
-                </form>
-
-            </div>
-            <div class="modal-footer">
-            </div> 
+    <div class="modal fade" id="delcal{{$campo_calculado->id}}" tabindex="-1" aria-labelledby="eliminarCalculadoLabel{{$campo_calculado->id}}" aria-hidden="true" data-mdb-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-danger text-white border-0 py-3">
+                    <h5 class="modal-title fw-bold" id="eliminarCalculadoLabel{{$campo_calculado->id}}">
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                        Confirmar Eliminación
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <i class="fa-solid fa-trash text-danger" style="font-size: 3rem;"></i>
+                        </div>
+                        <h6 class="fw-semibold">¿Estás seguro de eliminar este campo calculado?</h6>
+                        <p class="text-muted mb-0">
+                            <strong>{{$campo_calculado->nombre}}</strong>
+                        </p>
+                        <small class="text-muted d-block mt-2">
+                            Esta acción no se puede deshacer.
+                        </small>
+                    </div>
+                    <form action="{{route('eliminar.campo', [$campo_calculado->id, 'calculado'])}}" method="POST">
+                        @csrf @method('DELETE')
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary flex-fill" data-mdb-ripple-init data-mdb-dismiss="modal">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-danger flex-fill" data-mdb-ripple-init>
+                                <i class="fa-solid fa-trash me-2"></i>
+                                Eliminar
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div> 
@@ -526,26 +542,42 @@ OS --}}
 
 
 @foreach ($campos_precargados as $campo_precargado)
-    <div class="modal fade" id="delpre{{$campo_precargado->id}}" tabindex="-1"  aria-labelledby="exampleMddodalLabel" aria-hidden="true" data-mdb-backdrop="static">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-            <div class="modal-header bg-danger py-4">
-                <h3 class="text-white" id="exampleModalLabel">¿Eliminar a {{$campo_precargado->nombre}} ?</h3>
-                <button type="button" class="btn-close" data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body py-4">
-
-                <form action="{{route('eliminar.campo', [$campo_precargado->id, 'precargado'])}}" method="POST">
-                    @csrf @method('DELETE')
-                    
-                    <button  class="btn btn-danger w-100 py-3" data-mdb-ripple-init>
-                        <h6>Eliminar</h6>
-                    </button>
-                </form>
-
-            </div>
-            <div class="modal-footer">
-            </div> 
+    <div class="modal fade" id="delpre{{$campo_precargado->id}}" tabindex="-1" aria-labelledby="eliminarPrecargadoLabel{{$campo_precargado->id}}" aria-hidden="true" data-mdb-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-danger text-white border-0 py-3">
+                    <h5 class="modal-title fw-bold" id="eliminarPrecargadoLabel{{$campo_precargado->id}}">
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                        Confirmar Eliminación
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <i class="fa-solid fa-trash text-danger" style="font-size: 3rem;"></i>
+                        </div>
+                        <h6 class="fw-semibold">¿Estás seguro de eliminar este campo precargado?</h6>
+                        <p class="text-muted mb-0">
+                            <strong>{{$campo_precargado->nombre}}</strong>
+                        </p>
+                        <small class="text-muted d-block mt-2">
+                            Esta acción no se puede deshacer.
+                        </small>
+                    </div>
+                    <form action="{{route('eliminar.campo', [$campo_precargado->id, 'precargado'])}}" method="POST">
+                        @csrf @method('DELETE')
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary flex-fill" data-mdb-ripple-init data-mdb-dismiss="modal">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-danger flex-fill" data-mdb-ripple-init>
+                                <i class="fa-solid fa-trash me-2"></i>
+                                Eliminar
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -622,26 +654,42 @@ OS --}}
 
 
 @foreach ($campos_vacios as $campo_vacio)
-    <div class="modal fade" id="delvac{{$campo_vacio->id}}" tabindex="-1"  aria-labelledby="exampleMddodalLabel" aria-hidden="true" data-mdb-backdrop="static">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-            <div class="modal-header bg-danger py-4">
-                <h3 class="text-white" id="exampleModalLabel">¿Eliminar a {{$campo_vacio->nombre}} ?</h3>
-                <button type="button" class="btn-close" data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body py-4">
-
-                <form action="{{route('eliminar.campo', [$campo_vacio->id, 'vacio'])}}" method="POST">
-                    @csrf @method('DELETE')
-                    
-                    <button  class="btn btn-danger w-100 py-3" data-mdb-ripple-init>
-                        <h6>Eliminar</h6>
-                    </button>
-                </form>
-
-            </div>
-            <div class="modal-footer">
-            </div> 
+    <div class="modal fade" id="delvac{{$campo_vacio->id}}" tabindex="-1" aria-labelledby="eliminarVacioLabel{{$campo_vacio->id}}" aria-hidden="true" data-mdb-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-danger text-white border-0 py-3">
+                    <h5 class="modal-title fw-bold" id="eliminarVacioLabel{{$campo_vacio->id}}">
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                        Confirmar Eliminación
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <i class="fa-solid fa-trash text-danger" style="font-size: 3rem;"></i>
+                        </div>
+                        <h6 class="fw-semibold">¿Estás seguro de eliminar este campo vacío?</h6>
+                        <p class="text-muted mb-0">
+                            <strong>{{$campo_vacio->nombre}}</strong>
+                        </p>
+                        <small class="text-muted d-block mt-2">
+                            Esta acción no se puede deshacer.
+                        </small>
+                    </div>
+                    <form action="{{route('eliminar.campo', [$campo_vacio->id, 'vacio'])}}" method="POST">
+                        @csrf @method('DELETE')
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary flex-fill" data-mdb-ripple-init data-mdb-dismiss="modal">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-danger flex-fill" data-mdb-ripple-init>
+                                <i class="fa-solid fa-trash me-2"></i>
+                                Eliminar
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div> 
@@ -1426,15 +1474,14 @@ OS --}}
                     @csrf
                     
                    
-                    <h6 class="my-0">Total (Cantidad sobre la que se va a comparar)</h6>                    
+                        
+                    <h6 class="my-0">Parte (Cantidad a comparar)</h6>              
                     <div class="row mx-2 bg-light p-3 pb-5 mt-1 border" ondrop="dropPorcentaje(event)" ondragover="allowDropPorcentaje(event)" id="total_container">
-                </div>
-                
-                <h6 class="my-0">Parte (Cantidad a comparar)</h6>
-                        <div class="row mx-2 bg-light p-3 pb-5 border" ondrop="dropPorcentaje(event)" ondragover="allowDropPorcentaje(event)" id="parte_container">
-                
-
                     </div>
+                
+                    <h6 class="my-0">Total (Cantidad sobre la que se va a comparar)</h6>      
+                        <div class="row mx-2 bg-light p-3 pb-5 border" ondrop="dropPorcentaje(event)" ondragover="allowDropPorcentaje(event)" id="parte_container">
+                        </div>
                     
                 </form>
 
@@ -1633,42 +1680,53 @@ OS --}}
 
 {{-- @forelse ($campos_unidos as $campo)
 
-<div class="modal fade" id="del{{$campo->id_input}}" tabindex="-1"  aria-labelledby="exampleMddodalLabel" aria-hidden="true" data-mdb-backdrop="static">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-        <div class="modal-header bg-danger py-4">
-            <h3 class="text-white" id="exampleModalLabel">¿Eliminar a {{$campo->nombre}} ?</h3>
-            <button type="button" class="btn-close" data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body py-4">
-
-            <form action="{{route('eliminar.campo', $campo->id)}}" method="POST">
-                @csrf @method('DELETE')
-
-                <div class="form-group">
-                    <input type="hidden" name="id_input" value="{{$campo->id_input}}" >
+<div class="modal fade" id="del{{$campo->id_input}}" tabindex="-1" aria-labelledby="eliminarCampoLabel{{$campo->id_input}}" aria-hidden="true" data-mdb-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white border-0 py-3">
+                <h5 class="modal-title fw-bold" id="eliminarCampoLabel{{$campo->id_input}}">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                    Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <div class="text-center mb-4">
+                    <div class="mb-3">
+                        <i class="fa-solid fa-trash text-danger" style="font-size: 3rem;"></i>
+                    </div>
+                    <h6 class="fw-semibold">¿Estás seguro de eliminar este campo?</h6>
+                    <p class="text-muted mb-0">
+                        <strong>{{$campo->nombre}}</strong>
+                    </p>
+                    <small class="text-muted d-block mt-2">
+                        Esta acción no se puede deshacer.
+                    </small>
+                </div>
+                <form action="{{route('eliminar.campo', $campo->id)}}" method="POST">
+                    @csrf @method('DELETE')
+                    <input type="hidden" name="id_input" value="{{$campo->id_input}}">
                     <input type="hidden" name="campo_vacio" value="{{$campo->tipo}}">
                     <input type="hidden" name="campo_precargado" value="{{$campo->id_input_foraneo}}">
                     <input type="hidden" name="campo_calculado" value="{{$campo->operacion}}">
-                </div>
-
-
-                <button  class="btn btn-danger w-100 py-3" data-mdb-ripple-init>
-                    <h6>Eliminar</h6>
-                </button>
-
-            </form>
-
-        </div>
-        {{-- <div class="modal-footer">
-        </div> 
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary flex-fill" data-mdb-ripple-init data-mdb-dismiss="modal">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-danger flex-fill" data-mdb-ripple-init>
+                            <i class="fa-solid fa-trash me-2"></i>
+                            Eliminar
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
 @empty
 
-@endforelse --}}
+@endforelse
 
 
 @endsection

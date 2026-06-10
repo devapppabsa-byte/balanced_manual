@@ -837,24 +837,42 @@
 
 {{-- //indicadores_foraneos_agregados --}}
 @forelse ($indicadores_foraneos_agregados as $indicador_foraneo_agregado)
-    <div class="modal fade" id="del_indfor{{ $indicador_foraneo_agregado->id }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-mdb-backdrop="static">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-            <div class="modal-header bg-danger py-4">
-                <h3 class="text-white" id="exampleModalLabel">¿Eliminar Indicador de solo Lectura ?</h3>
-                <button type="button" class="btn-close " data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body py-4">
-                <form action="{{ route('eliminar.indicador.foraneo', [$departamento->id , $indicador_foraneo_agregado->id]) }}" method="POST">
-                    @csrf @method('DELETE')
-                    
-                    <button  class="btn btn-danger w-100 py-3" data-mdb-ripple-init>
-                        <h6>Eliminar</h6>
-                    </button>
-                </form>
-            </div>
-            {{-- <div class="modal-footer">
-            </div> --}}
+    <div class="modal fade" id="del_indfor{{ $indicador_foraneo_agregado->id }}" tabindex="-1" aria-labelledby="eliminarIndForaneoLabel{{$indicador_foraneo_agregado->id}}" aria-hidden="true" data-mdb-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-danger text-white border-0 py-3">
+                    <h5 class="modal-title fw-bold" id="eliminarIndForaneoLabel{{$indicador_foraneo_agregado->id}}">
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                        Confirmar Eliminación
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <i class="fa-solid fa-trash text-danger" style="font-size: 3rem;"></i>
+                        </div>
+                        <h6 class="fw-semibold">¿Estás seguro de eliminar este indicador de solo lectura?</h6>
+                        <p class="text-muted mb-0">
+                            <strong>{{$indicador_foraneo_agregado->nombre}}</strong>
+                        </p>
+                        <small class="text-muted d-block mt-2">
+                            Esta acción no se puede deshacer.
+                        </small>
+                    </div>
+                    <form action="{{ route('eliminar.indicador.foraneo', [$departamento->id , $indicador_foraneo_agregado->id]) }}" method="POST">
+                        @csrf @method('DELETE')
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary flex-fill" data-mdb-ripple-init data-mdb-dismiss="modal">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-danger flex-fill" data-mdb-ripple-init>
+                                <i class="fa-solid fa-trash me-2"></i>
+                                Eliminar
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -1364,23 +1382,42 @@
 {{--Puros bucles de modales--}}
 
 @forelse ($encuestas as $encuesta)
-    <div class="modal fade" id="del_en{{$encuesta->id}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-mdb-backdrop="static">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-            <div class="modal-header bg-danger py-4">
-                <h3 class="text-white" id="exampleModalLabel">¿Eliminar la encuesta {{$encuesta->nombre}} ?</h3>
-                <button type="button" class="btn-close " data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body py-4">
-                <form action="{{route('encuesta.delete', $encuesta->id)}}" method="POST">
-                    @csrf @method('DELETE')
-                    <button  class="btn btn-danger w-100 py-3" data-mdb-ripple-init>
-                        <h6>Eliminar</h6>
-                    </button>
-                </form>
-            </div>
-            {{-- <div class="modal-footer">
-            </div> --}}
+    <div class="modal fade" id="del_en{{$encuesta->id}}" tabindex="-1" aria-labelledby="eliminarEncuestaLabel{{$encuesta->id}}" aria-hidden="true" data-mdb-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-danger text-white border-0 py-3">
+                    <h5 class="modal-title fw-bold" id="eliminarEncuestaLabel{{$encuesta->id}}">
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                        Confirmar Eliminación
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <i class="fa-solid fa-trash text-danger" style="font-size: 3rem;"></i>
+                        </div>
+                        <h6 class="fw-semibold">¿Estás seguro de eliminar esta encuesta?</h6>
+                        <p class="text-muted mb-0">
+                            <strong>{{$encuesta->nombre}}</strong>
+                        </p>
+                        <small class="text-muted d-block mt-2">
+                            Esta acción no se puede deshacer.
+                        </small>
+                    </div>
+                    <form action="{{route('encuesta.delete', $encuesta->id)}}" method="POST">
+                        @csrf @method('DELETE')
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary flex-fill" data-mdb-ripple-init data-mdb-dismiss="modal">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-danger flex-fill" data-mdb-ripple-init>
+                                <i class="fa-solid fa-trash me-2"></i>
+                                Eliminar
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -1470,23 +1507,42 @@
 
 @forelse ($usuarios as $usuario)
 
-<div class="modal fade" id="del_user{{$usuario->id}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-mdb-backdrop="static">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-        <div class="modal-header bg-danger py-4">
-            <h3 class="text-white" id="exampleModalLabel">¿Eliminar a {{$usuario->name}} ?</h3>
-            <button type="button" class="btn-close " data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body py-4">
-            <form action="{{route('eliminar.usuario', $usuario->id)}}" method="POST">
-                @csrf @method('DELETE')
-                <button  class="btn btn-danger w-100 py-3" data-mdb-ripple-init>
-                    <h6>Eliminar</h6>
-                </button>
-            </form>
-        </div>
-        {{-- <div class="modal-footer">
-        </div> --}}
+<div class="modal fade" id="del_user{{$usuario->id}}" tabindex="-1" aria-labelledby="eliminarUsuarioLabel{{$usuario->id}}" aria-hidden="true" data-mdb-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white border-0 py-3">
+                <h5 class="modal-title fw-bold" id="eliminarUsuarioLabel{{$usuario->id}}">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                    Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <div class="text-center mb-4">
+                    <div class="mb-3">
+                        <i class="fa-solid fa-trash text-danger" style="font-size: 3rem;"></i>
+                    </div>
+                    <h6 class="fw-semibold">¿Estás seguro de eliminar a este usuario?</h6>
+                    <p class="text-muted mb-0">
+                        <strong>{{$usuario->name}}</strong>
+                    </p>
+                    <small class="text-muted d-block mt-2">
+                        Esta acción no se puede deshacer.
+                    </small>
+                </div>
+                <form action="{{route('eliminar.usuario', $usuario->id)}}" method="POST">
+                    @csrf @method('DELETE')
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary flex-fill" data-mdb-ripple-init data-mdb-dismiss="modal">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-danger flex-fill" data-mdb-ripple-init>
+                            <i class="fa-solid fa-trash me-2"></i>
+                            Eliminar
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -1582,25 +1638,44 @@
 
 
 @forelse ($indicadores as $indicador)
-    <div class="modal fade" id="bo{{$indicador->id}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-mdb-backdrop="static">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
-                    <h2>¿Eliminar Indicador?</h2>
+    <div class="modal fade" id="bo{{$indicador->id}}" tabindex="-1" aria-labelledby="eliminarIndicadorLabel{{$indicador->id}}" aria-hidden="true" data-mdb-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-danger text-white border-0 py-3">
+                    <h5 class="modal-title fw-bold" id="eliminarIndicadorLabel{{$indicador->id}}">
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                        Confirmar Eliminación
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body py-4">
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <i class="fa-solid fa-trash text-danger" style="font-size: 3rem;"></i>
+                        </div>
+                        <h6 class="fw-semibold">¿Estás seguro de eliminar este indicador?</h6>
+                        <p class="text-muted mb-0">
+                            <strong>{{$indicador->nombre}}</strong>
+                        </p>
+                        <small class="text-muted d-block mt-2">
+                            Esta acción no se puede deshacer.
+                        </small>
+                    </div>
                     <form action="{{route('borrar.indicador', $indicador->id)}}" method="POST">
                         @csrf @method('DELETE')
-                        <h2>
-                            <button class="btn btn-danger w-100 py-3">
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary flex-fill" data-mdb-ripple-init data-mdb-dismiss="modal">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-danger flex-fill" data-mdb-ripple-init>
+                                <i class="fa-solid fa-trash me-2"></i>
                                 Eliminar
                             </button>
-                        </h2>
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
-
     </div>
 @empty
 @endforelse
@@ -1608,19 +1683,40 @@
 
 @forelse ($normas as $norma)
 
-    <div class="modal fade" id="del_norm{{$norma->id}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-mdb-backdrop="static">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-danger py-4">
-                    <h3 class="text-white" id="exampleModalLabel">¿Eliminar {{$norma->nombre}} ?</h3>
-                    <button type="button" class="btn-close " data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
+    <div class="modal fade" id="del_norm{{$norma->id}}" tabindex="-1" aria-labelledby="eliminarNormaLabel{{$norma->id}}" aria-hidden="true" data-mdb-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-danger text-white border-0 py-3">
+                    <h5 class="modal-title fw-bold" id="eliminarNormaLabel{{$norma->id}}">
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                        Confirmar Eliminación
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body py-4">
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <i class="fa-solid fa-trash text-danger" style="font-size: 3rem;"></i>
+                        </div>
+                        <h6 class="fw-semibold">¿Estás seguro de eliminar esta norma?</h6>
+                        <p class="text-muted mb-0">
+                            <strong>{{$norma->nombre}}</strong>
+                        </p>
+                        <small class="text-muted d-block mt-2">
+                            Esta acción no se puede deshacer.
+                        </small>
+                    </div>
                     <form action="{{route('norma.delete', $norma->id)}}" method="POST">
                         @csrf @method('DELETE')
-                        <button  class="btn btn-danger w-100 py-3" data-mdb-ripple-init>
-                            <h6>Eliminar</h6>
-                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary flex-fill" data-mdb-ripple-init data-mdb-dismiss="modal">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-danger flex-fill" data-mdb-ripple-init>
+                                <i class="fa-solid fa-trash me-2"></i>
+                                Eliminar
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -1720,6 +1816,71 @@
 
 
 @section('scripts')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+
+<style>
+[data-scroll] {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+[data-scroll].animate__animated {
+    opacity: 1;
+    transform: translateY(0);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const el = entry.target;
+                const animation = el.dataset.scroll || 'fadeInUp';
+                el.classList.add('animate__animated', `animate__${animation}`);
+                observer.unobserve(el);
+            }
+        });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('[data-scroll]').forEach(el => observer.observe(el));
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const tabContent = document.getElementById('ex1-content');
+    const tabLinks = document.querySelectorAll('#departamentoTabs [data-mdb-tab-init]');
+    const storageKey = 'activeTab_agregar_indicadores';
+
+    // Restaurar tab guardado
+    const savedTab = localStorage.getItem(storageKey);
+    if (savedTab) {
+        const tab = document.querySelector(`#departamentoTabs [href="${savedTab}"]`);
+        if (tab) {
+            document.querySelectorAll('#departamentoTabs .nav-link').forEach(l => l.classList.remove('active'));
+            tab.classList.add('active');
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('show', 'active'));
+            const pane = document.querySelector(savedTab);
+            if (pane) pane.classList.add('show', 'active');
+        }
+    }
+
+    if (tabContent) tabContent.classList.remove('d-none');
+
+    // Guardar en localStorage al cambiar de tab + animación
+    tabLinks.forEach(tab => {
+        tab.addEventListener('shown.mdb.tab', e => {
+            localStorage.setItem(storageKey, e.target.getAttribute('href'));
+            const targetPane = document.querySelector(e.target.getAttribute('href'));
+            if (targetPane) {
+                targetPane.classList.remove('animate__animated', 'animate__fadeIn');
+                void targetPane.offsetWidth; // reflow
+                targetPane.classList.add('animate__animated', 'animate__fadeIn');
+            }
+        });
+    });
+});
+</script>
+
 <script>
 document.getElementById('buscadorIndicadores')
     .addEventListener('keyup', function () {

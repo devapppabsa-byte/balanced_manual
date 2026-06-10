@@ -296,6 +296,7 @@ public function indicador_index(Indicador $indicador){
     $informacion_foranea = CampoForaneo::get();
 
     return view('admin.indicador', compact('indicador', 'campos_vacios','campos_precargados','campos_calculados', 'informacion_foranea', 'campos_unidos', 'campo_final', 'campo_referencia'));
+    
 
 }
 

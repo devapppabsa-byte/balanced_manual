@@ -105,7 +105,7 @@ class departamentoController extends Controller
 
     public function departamentos_show_admin(){
         
-        $departamentos = Departamento::get();
+        $departamentos = Departamento::orderby("created_at", "DESC")->get();
 
 
         return view('admin.gestionar_departamentos', compact("departamentos"));

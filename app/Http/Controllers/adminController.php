@@ -97,7 +97,7 @@ $fin = request()->filled('fecha_fin')
 
 
 
-$departamentos = Departamento::get();
+$departamentos = Departamento::orderby("created_at", "DESC")->get();
 
 
 
