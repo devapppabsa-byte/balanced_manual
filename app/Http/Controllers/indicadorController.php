@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Facades\Http;
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
 use App\Models\AuxIndicadorForaneo;
@@ -2699,15 +2699,8 @@ else{
 
 
 
-//parece que no hace nda
-   $registros_tendencia = IndicadorLleno::where('id_indicador', $indicador->id)
-        ->where('final', 'on')
-        ->orderBy('fecha_periodo', 'asc')
-        ->whereBetween('fecha_periodo', [$inicio, $fin])
-        ->get();
-//parece que no hace nda
 
-    //return view('user.analizando_indicador_user', compact('indicador', 'info_meses', 'promedios', 'graficar', 'historico', 'resultado', 'mejor_mes', 'peor_mes'));
+
 
 
     return view('user.analizando_indicador_user', compact('indicador', 'info_meses', 'promedios', 'graficar', 'historico', 'resultado', 'mejor_mes', 'peor_mes', 'campos_graficar', 'campo_graficar','datos_campo_graficar', 'ultimo_mes', 'fechas_seleccionar', 'campos_llenos')); 
@@ -3087,12 +3080,7 @@ else{
 //parece que no hace nda
 
 
-
-
     return view('admin.analizando_indicador', compact('indicador', 'info_meses', 'promedios', 'graficar', 'historico', 'resultado', 'mejor_mes', 'peor_mes', 'campos_graficar', 'campo_graficar','datos_campo_graficar', 'ultimo_mes', 'fechas_seleccionar', 'campos_llenos', 'inicio', 'fin')); 
-
-
-
 
 }
 
@@ -3476,9 +3464,59 @@ else{
 //parece que no hace nda
 
 
+//parece que no hace nda
+  $registros = IndicadorLleno::where('id_indicador', $indicador->id)
+        ->whereBetween('fecha_periodo', [$inicio, $fin])
+        ->get();
+//parece que no hace nda
+
+    //return view('user.analizando_indicador_user', compact('indicador', 'info_meses', 'promedios', 'graficar', 'historico', 'resultado', 'mejor_mes', 'peor_mes'));
 
 
-    return view('admin.analizando_indicador', compact('indicador', 'info_meses', 'promedios', 'graficar', 'historico', 'resultado', 'mejor_mes', 'peor_mes', 'campos_graficar', 'campo_graficar','datos_campo_graficar', 'ultimo_mes', 'fechas_seleccionar', 'campos_llenos')); 
+
+    //integrando la IA al proyecto
+
+    $analisis_ia = null;
+
+    try {
+        $registros_formateados = $registros->map(fn($r) => [
+            'mes' => Carbon::parse($r->fecha_periodo)->translatedFormat('F Y'),
+            'campo' => $r->nombre_campo,
+            'valor' => $r->informacion_campo,
+        ])->toJson(JSON_UNESCAPED_UNICODE);
+
+        $messages = [
+            [
+                'role' => 'user',
+                'content' => "Analiza estos datos de un indicador KPI:\n{$registros_formateados}\n\nDame: tendencia, problemas identificados, recomendaciones de mejora y nivel de cumplimiento."
+            ]
+        ];
+
+
+
+
+        $response = Http::timeout(120)->withHeaders([
+            'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
+            'Content-Type' => 'application/json',
+            'HTTP-Referer' => config('app.url'),
+            'X-Title' => 'Laravel Chat',
+        ])
+        ->asJson()
+        ->post('https://openrouter.ai/api/v1/chat/completions', [
+            'model' => env('OPENROUTER_MODEL', 'deepseek/deepseek-chat'),
+            'messages' => $messages,
+        ]);
+
+        $datos = $response->json();
+
+        if ($datos && isset($datos['choices'][0]['message']['content'])) {
+            $analisis_ia = $datos['choices'][0]['message']['content'];
+        }
+    } catch (\Exception $e) {
+        $analisis_ia = null;
+    }
+
+    return view('admin.analizando_indicador', compact('indicador', 'info_meses', 'promedios', 'graficar', 'historico', 'resultado', 'mejor_mes', 'peor_mes', 'campos_graficar', 'campo_graficar','datos_campo_graficar', 'ultimo_mes', 'fechas_seleccionar', 'campos_llenos', 'analisis_ia')); 
 
 }
 

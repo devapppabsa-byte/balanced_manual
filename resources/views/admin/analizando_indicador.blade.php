@@ -1253,6 +1253,66 @@ else{
 </div>
 
 
+{{-- Floating AI Analysis Box --}}
+@php
+    $tiene_analisis = !empty($analisis_ia);
+@endphp
+
+<button id="btnFlotanteIA"
+    class="btn btn-primary rounded-circle shadow-lg position-fixed"
+    style="bottom: 1.5rem; right: 1.5rem; width: 56px; height: 56px; z-index: 1050; display: {{ $tiene_analisis ? 'flex' : 'none' }}; align-items: center; justify-content: center;"
+    onclick="togglePanelIA()"
+    title="Análisis con IA">
+    <i class="fa-solid fa-robot" style="font-size: 1.4rem;"></i>
+</button>
+
+<div id="panelFlotanteIA"
+    class="position-fixed shadow-lg rounded-4 bg-white"
+    style="bottom: 5rem; right: 1.5rem; width: 380px; max-height: 520px; z-index: 1050; display: none; overflow: hidden;">
+
+    <div class="d-flex align-items-center justify-content-between bg-primary text-white px-3 py-2" style="border-radius: 1rem 1rem 0 0;">
+        <h6 class="mb-0 fw-bold">
+            <i class="fa-solid fa-robot me-2"></i>
+            Análisis con IA
+        </h6>
+        <button type="button" class="btn btn-sm text-white p-0 border-0" onclick="togglePanelIA()">
+            <i class="fa-solid fa-xmark" style="font-size: 1.3rem;"></i>
+        </button>
+    </div>
+
+    <div class="px-3 py-3" style="overflow-y: auto; max-height: 440px;">
+        @if ($tiene_analisis)
+            <div class="text-dark" style="white-space: pre-wrap; font-size: 0.9rem; line-height: 1.6;">
+                {{ $analisis_ia }}
+            </div>
+        @else
+            <div class="text-center py-4 text-muted">
+                <i class="fa-solid fa-robot mb-2" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                <p class="mb-0">No hay análisis disponible para este indicador.</p>
+            </div>
+        @endif
+    </div>
+</div>
+
+<script>
+function togglePanelIA() {
+    const panel = document.getElementById('panelFlotanteIA');
+    if (panel.style.display === 'none' || panel.style.display === '') {
+        panel.style.display = 'block';
+    } else {
+        panel.style.display = 'none';
+    }
+}
+
+@if ($tiene_analisis)
+    document.addEventListener('DOMContentLoaded', function () {
+        setTimeout(() => {
+            document.getElementById('panelFlotanteIA').style.display = 'block';
+        }, 500);
+    });
+@endif
+</script>
+
 @endsection
 
 
