@@ -356,6 +356,8 @@ Route::post('perfil_usuario/encuestas_clientes_user/contestando/{encuesta}', [cl
 
 //escudriñando la informacion que se da en el indicador
 Route::get('perfil_admin/lista_indicadores/escudriñando_indicador/{indicador}', [indicadorController::class, 'analizar_indicador'])->name('analizar.indicador')->middleware("auth:admin");
+Route::post('perfil_admin/lista_indicadores/escudriñando_indicador/{indicador}/cruzados', [indicadorController::class, 'guardar_cruzados'])->name('guardar.cruzados')->middleware("auth:admin");
+Route::match(['GET', 'POST'], 'perfil_admin/lista_indicadores/escudriñando_indicador/{indicador}/analizar-cruzados', [indicadorController::class, 'analizar_cruzados_ia'])->name('analizar.cruzados.ia')->middleware("auth:admin");
 
 Route::get('perfil_admin/lista_indicadores/estacionalidad_indicador/{indicador}', [indicadorController::class, 'estacionalidad_show'])->name('estacionalidad.show');
 

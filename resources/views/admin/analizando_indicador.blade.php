@@ -1252,25 +1252,56 @@ else{
     </div>
 </div>
 
+{{-- Indicadores Cruzados --}}
+<div class="container-fluid mt-4">
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
+            <h5 class="fw-bold mb-0">
+                <i class="fa-solid fa-link text-primary me-2"></i>
+                Indicadores Cruzados
+            </h5>
+            <button class="btn btn-primary btn-sm rounded-pill px-3"  data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalCruzarIndicadores">
+                <i class="fa-solid fa-plus me-1"></i>
+                Cruzar indicador
+            </button>
+        </div>
+        <div class="card-body">
+            @forelse ($cruzados as $cruzado)
+                <div class="d-flex align-items-center justify-content-between border rounded-3 p-3 mb-2">
+                    <div>
+                        <span class="fw-semibold">{{ $cruzado->indicadorHijo->nombre }}</span>
+                        <br>
+                        <small class="text-muted">{{ $cruzado->indicadorHijo->departamento->nombre ?? '—' }}</small>
+                    </div>
+                    <span class="badge bg-{{ $cruzado->indicadorHijo->tipo_indicador === 'riesgo' ? 'danger' : 'success' }} bg-opacity-10 text-dark px-3 py-2">
+                        {{ $cruzado->indicadorHijo->tipo_indicador ?? 'normal' }}
+                    </span>
+                </div>
+            @empty
+                <div class="text-center py-4 text-muted">
+                    <i class="fa-solid fa-link mb-2" style="font-size: 3rem; opacity: 0.3;"></i>
+                    <p class="mb-0">No hay indicadores cruzados.</p>
+                    <small>Presiona "Cruzar indicador" para agregar.</small>
+                </div>
+            @endforelse
+        </div>
+    </div>
+</div>
 
 {{-- Floating AI Analysis Box --}}
-@php
-    $tiene_analisis = !empty($analisis_ia);
-@endphp
-
 <button id="btnFlotanteIA"
     class="btn btn-primary rounded-circle shadow-lg position-fixed"
-    style="bottom: 1.5rem; right: 1.5rem; width: 56px; height: 56px; z-index: 1050; display: {{ $tiene_analisis ? 'flex' : 'none' }}; align-items: center; justify-content: center;"
+    style="bottom: 1.5rem; right: 1.5rem; width: 56px; height: 56px; z-index: 1050; display: flex; align-items: center; justify-content: center;"
     onclick="togglePanelIA()"
     title="Análisis con IA">
     <i class="fa-solid fa-robot" style="font-size: 1.4rem;"></i>
 </button>
 
 <div id="panelFlotanteIA"
-    class="position-fixed shadow-lg rounded-4 bg-white"
-    style="bottom: 5rem; right: 1.5rem; width: 380px; max-height: 520px; z-index: 1050; display: none; overflow: hidden;">
+    class="col-7 shadow-lg rounded-4 bg-white d-flex flex-column"
+    style="position: fixed; top: 8%; left: 25%; height: 580px; z-index: 1050; display: none;">
 
-    <div class="d-flex align-items-center justify-content-between bg-primary text-white px-3 py-2" style="border-radius: 1rem 1rem 0 0;">
+    <div class="panel-header-ia d-flex align-items-center justify-content-between bg-primary text-white px-3 py-2" style="border-radius: 1rem 1rem 0 0; flex-shrink: 0; cursor: grab;">
         <h6 class="mb-0 fw-bold">
             <i class="fa-solid fa-robot me-2"></i>
             Análisis con IA
@@ -1280,44 +1311,295 @@ else{
         </button>
     </div>
 
-    <div class="px-3 py-3" style="overflow-y: auto; max-height: 440px;">
-        @if ($tiene_analisis)
-            <div class="text-dark" style="white-space: pre-wrap; font-size: 0.9rem; line-height: 1.6;">
-                {{ $analisis_ia }}
-            </div>
-        @else
+    <div id="chatPanelIA" class="flex-grow-1 px-3 py-2" style="overflow-y: auto; min-height: 0;">
+        <div id="contenidoPanelIA">
             <div class="text-center py-4 text-muted">
                 <i class="fa-solid fa-robot mb-2" style="font-size: 2.5rem; opacity: 0.3;"></i>
-                <p class="mb-0">No hay análisis disponible para este indicador.</p>
+                <p class="mb-0">Presiona el botón flotante para analizar los indicadores.</p>
             </div>
-        @endif
+        </div>
+        <div id="loaderPanelIA" class="text-center py-4" style="display: none;">
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="fw-semibold text-muted mb-0">Analizando con IA...</p>
+        </div>
+    </div>
+
+    {{-- Input para preguntar --}}
+    <div class="border-top px-3 py-2 d-flex gap-2" style="flex-shrink: 0;">
+        <input type="text" id="inputPreguntaIA" class="form-control form-control-sm" placeholder="Pregunta algo sobre el análisis...">
+        <button id="btnEnviarPregunta" class="btn btn-primary btn-sm rounded-pill px-3" onclick="enviarPregunta()">
+            <i class="fa-solid fa-paper-plane"></i>
+        </button>
     </div>
 </div>
 
 <script>
-function togglePanelIA() {
-    const panel = document.getElementById('panelFlotanteIA');
-    if (panel.style.display === 'none' || panel.style.display === '') {
-        panel.style.display = 'block';
-    } else {
-        panel.style.display = 'none';
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof interact !== 'undefined') {
+        interact('#panelFlotanteIA').draggable({
+            allowFrom: '.panel-header-ia',
+            listeners: {
+                move(event) {
+                    const target = event.target;
+                    const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                    const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+                    target.style.transform = `translate(${x}px, ${y}px)`;
+                    target.setAttribute('data-x', x);
+                    target.setAttribute('data-y', y);
+                }
+            }
+        });
     }
-}
-
-@if ($tiene_analisis)
-    document.addEventListener('DOMContentLoaded', function () {
-        setTimeout(() => {
-            document.getElementById('panelFlotanteIA').style.display = 'block';
-        }, 500);
-    });
-@endif
+});
 </script>
 
+<script>
+let panelIAAbierto = false;
+
+function togglePanelIA() {
+    const panel = document.getElementById('panelFlotanteIA');
+    panelIAAbierto = !panelIAAbierto;
+    panel.style.display = panelIAAbierto ? 'flex' : 'none';
+    if (panelIAAbierto) analizarCruzadosIA();
+}
+
+function agregarMensaje(texto, esUsuario = false, esError = false) {
+    const chat = document.getElementById('chatPanelIA');
+    const loader = document.getElementById('loaderPanelIA');
+    const contenido = document.getElementById('contenidoPanelIA');
+
+    loader.style.display = 'none';
+    contenido.style.display = 'none';
+
+    const div = document.createElement('div');
+    div.className = 'mb-3 ' + (esUsuario ? 'text-end' : '');
+
+    if (esError) {
+        div.innerHTML = '<div class="text-danger small p-2 rounded bg-danger bg-opacity-10">' + texto + '</div>';
+    } else if (esUsuario) {
+        div.innerHTML = '<div class="d-inline-block bg-primary text-white small rounded-3 px-3 py-2" style="max-width: 85%;">' + escapeHtml(texto) + '</div>';
+    } else {
+        div.innerHTML = '<div class="text-dark small p-2" style="white-space: pre-wrap; line-height: 1.5;">' + marked.parse(texto) + '</div>';
+    }
+
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function analizarCruzadosIA() {
+    const chat = document.getElementById('chatPanelIA');
+    const loader = document.getElementById('loaderPanelIA');
+    const contenido = document.getElementById('contenidoPanelIA');
+
+    contenido.style.display = 'none';
+    chat.querySelectorAll('.bot-msg, .user-msg').forEach(el => el.remove());
+
+    loader.style.display = 'block';
+
+    fetch('{{ route("analizar.cruzados.ia", $indicador->id) }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.analisis) {
+            agregarMensaje(data.analisis);
+        } else {
+            agregarMensaje(data.error || 'Error al analizar.', false, true);
+        }
+    })
+    .catch(err => {
+        agregarMensaje('Error de conexión.', false, true);
+    });
+}
+
+function mostrarPensando() {
+    const chat = document.getElementById('chatPanelIA');
+    const div = document.createElement('div');
+    div.className = 'mb-3';
+    div.id = 'pensandoIndicator';
+    div.innerHTML = '<div class="text-muted small px-2 py-1"><span class="spinner-border spinner-border-sm me-2" role="status"></span>Pensando<span class="dots"></span></div>';
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function quitarPensando() {
+    const el = document.getElementById('pensandoIndicator');
+    if (el) el.remove();
+}
+
+function enviarPregunta() {
+    const input = document.getElementById('inputPreguntaIA');
+    const pregunta = input.value.trim();
+    if (!pregunta) return;
+
+    input.value = '';
+    agregarMensaje(pregunta, true);
+    mostrarPensando();
+
+    fetch('{{ route("analizar.cruzados.ia", $indicador->id) }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ question: pregunta }),
+    })
+    .then(res => res.json())
+    .then(data => {
+        quitarPensando();
+        if (data.analisis) {
+            agregarMensaje(data.analisis);
+        } else {
+            agregarMensaje(data.error || 'Error al obtener respuesta.', false, true);
+        }
+    })
+    .catch(err => {
+        quitarPensando();
+        agregarMensaje('Error de conexión.', false, true);
+    });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
+<script>
+document.getElementById("inputPreguntaIA").addEventListener("keydown", function(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        enviarPregunta();
+    }
+});
+</script>
+
+{{-- Fullscreen modal para cruzar indicadores --}}
+<div class="modal fade" id="modalCruzarIndicadores" tabindex="-1" aria-labelledby="modalCruzarLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-fullscreen modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary py-4">
+                <h3 class="text-white">
+                    <i class="fa-solid fa-link me-2"></i>
+                    Indicadores Disponibles
+                </h3>
+                <button type="button" class="btn-close" data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <input type="search" id="buscadorIndicadoresCruzados" class="form-control form-control-lg" placeholder="Buscar indicador...">
+                    </div>
+                </div>
+                <form action="{{ route('guardar.cruzados', $indicador->id) }}" method="POST" id="formCruzarIndicadores">
+                    @csrf
+                    <div class="row justify-content-around" id="contenedorIndicadoresCruzados">
+                        @forelse ($indicadores as $indicador_item)
+                            @if ($indicador_item->id != $indicador->id)
+                                <div class="col-3 m-1 p-3 item-indicador-cruzado"
+                                    data-nombre="{{ strtolower($indicador_item->nombre) }}">
+                                    <input type="checkbox"
+                                        name="indicadores[]"
+                                        value="{{ $indicador_item->id }}"
+                                        class="btn-check indicador-cruzado-checkbox"
+                                        id="cruzado_{{ $indicador_item->id }}"
+                                        autocomplete="off"
+                                        {{ $cruzados->contains('id_indicador_hijo', $indicador_item->id) ? 'checked' : '' }}>
+                                    <label class="btn btn-outline-primary custom-check text-start w-100 h-100"
+                                        for="cruzado_{{ $indicador_item->id }}">
+                                        <div class="text-center fw-bold">
+                                            {{ $indicador_item->nombre }}
+                                        </div>
+                                        <div class="text-muted small">
+                                            {{ $indicador_item->departamento->nombre ?? '—' }}
+                                        </div>
+                                        <div class="mb-2">
+                                            @php
+                                            $tipos = [
+                                                "g" => "<i class='fa-solid fa-city'></i> Indicador General",
+                                                "p" => "<i class='fa-solid fa-cow'></i> Pecuarios",
+                                                "m" => "<i class='fa-solid fa-dog'></i> Mascotas",
+                                            ];
+                                            @endphp
+                                            {!!
+                                                empty($indicador_item->planta)
+                                                    ? "<i class='fa-solid fa-circle-exclamation'></i> Sin asignación"
+                                                    : ($tipos[strtolower($indicador_item->planta)]
+                                                        ?? "<i class='fa-solid fa-industry'></i> Planta {$indicador_item->planta}")
+                                            !!}
+                                        </div>
+                                        <div>
+                                            @if($cruzados->contains('id_indicador_hijo', $indicador_item->id))
+                                                <span class="badge bg-success w-100">
+                                                    <i class="fa-regular fa-circle-check"></i>
+                                                    Cruzado
+                                                </span>
+                                            @else
+                                                <span class="badge bg-secondary w-100">
+                                                    Disponible
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </label>
+                                </div>
+                            @endif
+                        @empty
+                            <div class="col-12 text-center py-4">
+                                <p class="text-muted">No hay indicadores disponibles.</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button form="formCruzarIndicadores" type="submit" class="btn btn-primary w-100 py-3">
+                    <h6>Guardar selección</h6>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const buscador = document.getElementById('buscadorIndicadoresCruzados');
+    if (buscador) {
+        buscador.addEventListener('input', function () {
+            const filtro = this.value.toLowerCase();
+            document.querySelectorAll('.item-indicador-cruzado').forEach(item => {
+                const nombre = item.getAttribute('data-nombre');
+                item.style.display = nombre.includes(filtro) ? '' : 'none';
+            });
+        });
+    }
+});
+</script>
 @endsection
 
 
 
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<style>
+.dots::after {
+    content: '';
+    animation: dots 1.5s steps(3, end) infinite;
+}
+@keyframes dots {
+    0%   { content: ''; }
+    33%  { content: '.'; }
+    66%  { content: '..'; }
+    100% { content: '...'; }
+}
+</style>
 @section('scripts')
 
 

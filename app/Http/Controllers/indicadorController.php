@@ -26,6 +26,7 @@ use App\Models\Encuesta;
 use App\Models\User;
 use App\Models\LogBalanced;
 use App\Models\MetaIndicador;
+use App\Models\IndicadorCruzado;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -1937,8 +1938,9 @@ foreach($inputs_precargados as $index_precargados => $precargado){
                             ]);
                             
                             
-                        }
-                            
+}
+
+
                             
 
                     if($campo_calculado->operacion === "promedio"){
@@ -2191,6 +2193,135 @@ foreach($inputs_precargados as $index_precargados => $precargado){
 
 
 }
+
+    public function guardar_cruzados(Request $request, Indicador $indicador)
+    {
+        $request->validate([
+            'indicadores' => 'required|array',
+            'indicadores.*' => 'exists:indicadores,id',
+        ]);
+
+        $ids_hijos = $request->indicadores;
+
+        $existentes = IndicadorCruzado::where('id_indicador_padre', $indicador->id)
+            ->whereIn('id_indicador_hijo', $ids_hijos)
+            ->pluck('id_indicador_hijo')
+            ->toArray();
+
+        $nuevos = array_diff($ids_hijos, $existentes);
+
+        foreach ($nuevos as $id_hijo) {
+            IndicadorCruzado::create([
+                'id_indicador_padre' => $indicador->id,
+                'id_indicador_hijo' => $id_hijo,
+            ]);
+        }
+
+        return redirect()->route('analizar.indicador', $indicador->id)
+            ->with('success', 'Indicadores cruzados agregados correctamente.');
+    }
+
+    public function analizar_cruzados_ia(Request $request, Indicador $indicador)
+    {
+        $sessionKey = 'chat_ia_indicador_' . $indicador->id;
+        $question = $request->input('question');
+
+        if (!$question) {
+            $cruzados = IndicadorCruzado::with('indicadorHijo')
+                ->where('id_indicador_padre', $indicador->id)
+                ->get();
+
+            if ($cruzados->isEmpty()) {
+                return response()->json(['error' => 'No hay indicadores cruzados para analizar.'], 400);
+            }
+
+            $datos_para_analisis = [];
+
+            $registros_padre = IndicadorLleno::where('id_indicador', $indicador->id)
+                ->orderBy('fecha_periodo', 'desc')
+                ->take(50)
+                ->get()
+                ->map(fn($r) => [
+                    'indicador' => $indicador->nombre . ' (padre)',
+                    'mes' => Carbon::parse($r->fecha_periodo)->translatedFormat('F Y'),
+                    'campo' => $r->nombre_campo,
+                    'valor' => $r->informacion_campo,
+                ]);
+
+            if ($registros_padre->isNotEmpty()) {
+                $datos_para_analisis[] = $registros_padre->toArray();
+            }
+
+            foreach ($cruzados as $cruzado) {
+                $registros = IndicadorLleno::where('id_indicador', $cruzado->id_indicador_hijo)
+                    ->orderBy('fecha_periodo', 'desc')
+                    ->take(50)
+                    ->get()
+                    ->map(fn($r) => [
+                        'indicador' => $cruzado->indicadorHijo->nombre . ' (cruzado)',
+                        'mes' => Carbon::parse($r->fecha_periodo)->translatedFormat('F Y'),
+                        'campo' => $r->nombre_campo,
+                        'valor' => $r->informacion_campo,
+                    ]);
+
+                if ($registros->isNotEmpty()) {
+                    $datos_para_analisis[] = $registros->toArray();
+                }
+            }
+
+            if (empty($datos_para_analisis)) {
+                return response()->json(['error' => 'No hay datos registrados en los indicadores.'], 400);
+            }
+
+            $payload = json_encode($datos_para_analisis, JSON_UNESCAPED_UNICODE);
+
+            $systemMessage = "Eres un analista de KPI experto. Tus respuestas deben ser en markdown con formato limpio. Usa encabezados, listas, tablas y negritas para mejor legibilidad.";
+            $userMessage = "Analiza estos datos de múltiples indicadores KPI cruzados:\n{$payload}\n\nDame: tendencias generales, problemas identificados, recomendaciones de mejora y nivel de cumplimiento de cada uno y tambien combinalos y dime que concluciones sacas de acuerdo al resultado de cada uno, todos estos KPI tiene que ver entre si. Usa formato markdown.";
+
+            $messages = [
+                ['role' => 'system', 'content' => $systemMessage],
+                ['role' => 'user', 'content' => $userMessage],
+            ];
+        } else {
+            $messages = session($sessionKey, []);
+
+            if (empty($messages)) {
+                return response()->json(['error' => 'La conversación ha expirado. Vuelve a presionar el botón de análisis.'], 400);
+            }
+
+            $messages[] = ['role' => 'user', 'content' => $question];
+        }
+
+        try {
+            $response = Http::timeout(120)->withHeaders([
+                'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
+                'Content-Type' => 'application/json',
+                'HTTP-Referer' => config('app.url'),
+                'X-Title' => 'Laravel Chat',
+            ])
+            ->asJson()
+            ->post('https://openrouter.ai/api/v1/chat/completions', [
+                'model' => env('OPENROUTER_MODEL', 'deepseek/deepseek-chat'),
+                'messages' => $messages,
+                'max_tokens' => 2000,
+            ]);
+
+            $datos = $response->json();
+
+            if ($datos && isset($datos['choices'][0]['message']['content'])) {
+                $respuesta = $datos['choices'][0]['message']['content'];
+
+                $messages[] = ['role' => 'assistant', 'content' => $respuesta];
+                session([$sessionKey => $messages]);
+
+                return response()->json(['analisis' => $respuesta]);
+            }
+
+            return response()->json(['error' => 'La IA no pudo generar un análisis.'], 500);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error al conectar con la IA: ' . $e->getMessage()], 500);
+        }
+    }
 
 
 
@@ -3474,49 +3605,11 @@ else{
 
 
 
-    //integrando la IA al proyecto
+    //cruzados
+    $indicadores = Indicador::all();
+    $cruzados = IndicadorCruzado::with('indicadorHijo')->where('id_indicador_padre', $indicador->id)->get();
 
-    $analisis_ia = null;
-
-    try {
-        $registros_formateados = $registros->map(fn($r) => [
-            'mes' => Carbon::parse($r->fecha_periodo)->translatedFormat('F Y'),
-            'campo' => $r->nombre_campo,
-            'valor' => $r->informacion_campo,
-        ])->toJson(JSON_UNESCAPED_UNICODE);
-
-        $messages = [
-            [
-                'role' => 'user',
-                'content' => "Analiza estos datos de un indicador KPI:\n{$registros_formateados}\n\nDame: tendencia, problemas identificados, recomendaciones de mejora y nivel de cumplimiento."
-            ]
-        ];
-
-
-
-
-        $response = Http::timeout(120)->withHeaders([
-            'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
-            'Content-Type' => 'application/json',
-            'HTTP-Referer' => config('app.url'),
-            'X-Title' => 'Laravel Chat',
-        ])
-        ->asJson()
-        ->post('https://openrouter.ai/api/v1/chat/completions', [
-            'model' => env('OPENROUTER_MODEL', 'deepseek/deepseek-chat'),
-            'messages' => $messages,
-        ]);
-
-        $datos = $response->json();
-
-        if ($datos && isset($datos['choices'][0]['message']['content'])) {
-            $analisis_ia = $datos['choices'][0]['message']['content'];
-        }
-    } catch (\Exception $e) {
-        $analisis_ia = null;
-    }
-
-    return view('admin.analizando_indicador', compact('indicador', 'info_meses', 'promedios', 'graficar', 'historico', 'resultado', 'mejor_mes', 'peor_mes', 'campos_graficar', 'campo_graficar','datos_campo_graficar', 'ultimo_mes', 'fechas_seleccionar', 'campos_llenos', 'analisis_ia')); 
+    return view('admin.analizando_indicador', compact('indicador', 'info_meses', 'promedios', 'graficar', 'historico', 'resultado', 'mejor_mes', 'peor_mes', 'campos_graficar', 'campo_graficar', 'datos_campo_graficar', 'ultimo_mes', 'fechas_seleccionar', 'campos_llenos', 'indicadores', 'cruzados')); 
 
 }
 
