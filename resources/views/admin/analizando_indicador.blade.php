@@ -1306,7 +1306,7 @@ else{
             <i class="fa-solid fa-robot me-2"></i>
             Análisis con IA
         </h6>
-        <button type="button" class="btn btn-sm text-white p-0 border-0" onclick="togglePanelIA()">
+        <button type="button" class="btn btn-sm text-white p-0 border-0" onclick="cerrarPanelIA()">
             <i class="fa-solid fa-xmark" style="font-size: 1.3rem;"></i>
         </button>
     </div>
@@ -1362,7 +1362,23 @@ function togglePanelIA() {
     const panel = document.getElementById('panelFlotanteIA');
     panelIAAbierto = !panelIAAbierto;
     panel.style.display = panelIAAbierto ? 'flex' : 'none';
-    if (panelIAAbierto) analizarCruzadosIA();
+    if (panelIAAbierto) {
+        @if ($cruzados->isEmpty())
+            const chat = document.getElementById('chatPanelIA');
+            document.getElementById('loaderPanelIA').style.display = 'none';
+            document.getElementById('contenidoPanelIA').style.display = 'none';
+            chat.querySelectorAll('.bot-msg, .user-msg').forEach(el => el.remove());
+            agregarMensaje('No hay indicadores cruzados para analizar. Usa el botón **"Cruzar indicador"** en la sección de abajo para agregar uno.', false, true);
+        @else
+            analizarCruzadosIA();
+        @endif
+    }
+}
+
+function cerrarPanelIA() {
+    const panel = document.getElementById('panelFlotanteIA');
+    panelIAAbierto = false;
+    panel.style.display = 'none';
 }
 
 function agregarMensaje(texto, esUsuario = false, esError = false) {

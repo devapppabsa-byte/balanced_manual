@@ -2239,7 +2239,7 @@ foreach($inputs_precargados as $index_precargados => $precargado){
 
             $registros_padre = IndicadorLleno::where('id_indicador', $indicador->id)
                 ->orderBy('fecha_periodo', 'desc')
-                ->take(50)
+                ->take(10)
                 ->get()
                 ->map(fn($r) => [
                     'indicador' => $indicador->nombre . ' (padre)',
@@ -2255,7 +2255,7 @@ foreach($inputs_precargados as $index_precargados => $precargado){
             foreach ($cruzados as $cruzado) {
                 $registros = IndicadorLleno::where('id_indicador', $cruzado->id_indicador_hijo)
                     ->orderBy('fecha_periodo', 'desc')
-                    ->take(50)
+                    ->take(10)
                     ->get()
                     ->map(fn($r) => [
                         'indicador' => $cruzado->indicadorHijo->nombre . ' (cruzado)',
@@ -2293,7 +2293,7 @@ foreach($inputs_precargados as $index_precargados => $precargado){
         }
 
         try {
-            $response = Http::timeout(120)->withHeaders([
+            $response = Http::timeout(200)->withHeaders([
                 'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
                 'Content-Type' => 'application/json',
                 'HTTP-Referer' => config('app.url'),
@@ -2301,12 +2301,13 @@ foreach($inputs_precargados as $index_precargados => $precargado){
             ])
             ->asJson()
             ->post('https://openrouter.ai/api/v1/chat/completions', [
-                'model' => env('OPENROUTER_MODEL', 'deepseek/deepseek-chat'),
+                'model' => env('OPENROUTER_MODEL', 'openai/gpt-oss-120b:free'),
                 'messages' => $messages,
-                'max_tokens' => 2000,
+                'max_tokens' => 500,
             ]);
 
             $datos = $response->json();
+            $status = $response->status();
 
             if ($datos && isset($datos['choices'][0]['message']['content'])) {
                 $respuesta = $datos['choices'][0]['message']['content'];
@@ -2317,7 +2318,10 @@ foreach($inputs_precargados as $index_precargados => $precargado){
                 return response()->json(['analisis' => $respuesta]);
             }
 
-            return response()->json(['error' => 'La IA no pudo generar un análisis.'], 500);
+            $errorMsg = is_array($datos) ? ($datos['error']['message'] ?? json_encode($datos, JSON_UNESCAPED_UNICODE)) : 'Respuesta vacía de OpenRouter';
+            \Illuminate\Support\Facades\Log::info('OpenRouter error - status: ' . $status . ' body: ' . $errorMsg);
+
+            return response()->json(['error' => 'La IA no pudo generar un análisis: ' . $errorMsg], 500);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Error al conectar con la IA: ' . $e->getMessage()], 500);
         }
