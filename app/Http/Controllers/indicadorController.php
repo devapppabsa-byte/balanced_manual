@@ -2275,8 +2275,8 @@ foreach($inputs_precargados as $index_precargados => $precargado){
 
             $payload = json_encode($datos_para_analisis, JSON_UNESCAPED_UNICODE);
 
-            $systemMessage = "Eres un analista de KPI experto. Tus respuestas deben ser en markdown con formato limpio. Usa encabezados, listas, tablas y negritas para mejor legibilidad.";
-            $userMessage = "Analiza estos datos de múltiples indicadores KPI cruzados:\n{$payload}\n\nDame: tendencias generales, problemas identificados, recomendaciones de mejora y nivel de cumplimiento de cada uno y tambien combinalos y dime que concluciones sacas de acuerdo al resultado de cada uno, todos estos KPI tiene que ver entre si. Usa formato markdown.";
+            $systemMessage = "Eres un analista de KPI experto. Tus respuestas deben ser en markdown con formato limpio. Usa encabezados, listas, tablas y negritas para mejor legibilidad no uses mucho espacio entre parrafos ni mucho interlineado.";
+            $userMessage = "Analiza estos datos de múltiples indicadores KPI cruzados:\n{$payload}\n\nDame: tendencias generales, problemas identificados, recomendaciones de mejora y nivel de cumplimiento de cada uno y tambien combinalos y dime que concluciones sacas de acuerdo al resultado de cada uno, todos estos KPI tiene que ver entre si. Usa formato markdown y al final dame una tabla con los resultados de cada mes.";
 
             $messages = [
                 ['role' => 'system', 'content' => $systemMessage],

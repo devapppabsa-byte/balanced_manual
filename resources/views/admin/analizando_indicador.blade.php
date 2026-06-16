@@ -1315,7 +1315,15 @@ else{
         <div id="contenidoPanelIA">
             <div class="text-center py-4 text-muted">
                 <i class="fa-solid fa-robot mb-2" style="font-size: 2.5rem; opacity: 0.3;"></i>
-                <p class="mb-0">Presiona el botón flotante para analizar los indicadores.</p>
+                @if ($cruzados->isEmpty())
+                    <p class="mb-0">No hay indicadores cruzados para analizar. Usa el botón <strong>"Cruzar indicador"</strong> en la sección de abajo para agregar uno.</p>
+                @else
+                    <p class="mb-1">Panel de análisis con IA</p>
+                    <button id="btnIniciarAnalisisIA" class="btn btn-primary rounded-pill px-4 mt-2" onclick="analizarCruzadosIA()">
+                        <i class="fa-solid fa-play me-1"></i>
+                        Iniciar análisis con IA
+                    </button>
+                @endif
             </div>
         </div>
         <div id="loaderPanelIA" class="text-center py-4" style="display: none;">
@@ -1362,23 +1370,16 @@ function togglePanelIA() {
     const panel = document.getElementById('panelFlotanteIA');
     panelIAAbierto = !panelIAAbierto;
     panel.style.display = panelIAAbierto ? 'flex' : 'none';
-    if (panelIAAbierto) {
-        @if ($cruzados->isEmpty())
-            const chat = document.getElementById('chatPanelIA');
-            document.getElementById('loaderPanelIA').style.display = 'none';
-            document.getElementById('contenidoPanelIA').style.display = 'none';
-            chat.querySelectorAll('.bot-msg, .user-msg').forEach(el => el.remove());
-            agregarMensaje('No hay indicadores cruzados para analizar. Usa el botón **"Cruzar indicador"** en la sección de abajo para agregar uno.', false, true);
-        @else
-            analizarCruzadosIA();
-        @endif
-    }
+    panel.classList.toggle('d-none', !panelIAAbierto);
 }
 
 function cerrarPanelIA() {
+    console.log('cerrarPanelIA ejecutado');
     const panel = document.getElementById('panelFlotanteIA');
     panelIAAbierto = false;
     panel.style.display = 'none';
+    panel.classList.add('d-none');
+    console.log('display computed:', getComputedStyle(panel).display);
 }
 
 function agregarMensaje(texto, esUsuario = false, esError = false) {
