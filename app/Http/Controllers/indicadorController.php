@@ -1736,11 +1736,12 @@ public function indicador_lleno_show_admin(Indicador $indicador){
 //aui empieza el codigo para el llenado de indicadores
 public function llenado_informacion_indicadores(Indicador $indicador, Request $request){
 
+
     
     //fechas usadas para el llenado de indicadores del año ´pasado:
-   $fecha_periodo = Carbon::now()->subMonth();
+   //$fecha_periodo = Carbon::now()->subMonth();
     $fecha_periodo = Carbon::parse($request->fecha_periodo);
-   // $created_at = Carbon::parse($request->fecha_periodo)->addMonth();
+    $created_at = Carbon::parse($request->fecha_periodo)->addMonth();
 
 
     $nombre_usuario = auth()->user()->name;
@@ -1748,11 +1749,11 @@ public function llenado_informacion_indicadores(Indicador $indicador, Request $r
     $mes = Carbon::now()->subMonth()->translatedFormat('F');
 
     //esta es la fechsa periodo que se debe usar en el llenado original de los indicadores.
-    $fecha_periodo_original = now()->timezone('America/Mexico_City')->subMonth();
+    $fecha_periodo_original = $fecha_periodo;
 
     //$id_movimiento = (string) Str::ulid();
 
-     $id_movimiento = str_replace(':', '',str_replace(' ','',Carbon::now().'-'.random_int(0, 5000000))); //exagere un poquis, pero poatra que no de error
+     $id_movimiento = str_replace(':', '',str_replace(' ','',Carbon::now().'-'.random_int(0, 5000000))); //exagere un poquis, pero para que no de error
 
 
     //validando la insercion de datos
@@ -1765,6 +1766,8 @@ public function llenado_informacion_indicadores(Indicador $indicador, Request $r
             "tipo_input" => "required"
         
         ]);
+
+
 
 
 //EN ESTA PARTE SE CARGAN LOS CAMPOS VACIOS AL INDICADORE LLENO....
@@ -1790,8 +1793,8 @@ public function llenado_informacion_indicadores(Indicador $indicador, Request $r
                 "id_indicador" =>$indicador->id,
                 "id_movimiento" => $id_movimiento,
                 'fecha_periodo' => $fecha_periodo,
-                'unidad_medida' => $request->tipo_input[0]
-                //'created_at' => $created_at 
+                'unidad_medida' => $request->tipo_input[0],
+                'created_at' => $created_at 
             ]);
 
 
@@ -1821,8 +1824,8 @@ foreach($inputs_precargados as $index_precargados => $precargado){
             "id_indicador" =>$indicador->id,
             "id_movimiento" => $id_movimiento,
             'fecha_periodo' => $fecha_periodo,
-            'unidad_medida' => $informacion->unidad_medida
-            //'created_at' => $created_at 
+            'unidad_medida' => $informacion->unidad_medida,
+            'created_at' => $created_at 
         ]);  
 
 }
@@ -1857,8 +1860,6 @@ foreach($inputs_precargados as $index_precargados => $precargado){
             $campos_precargados_encontrados = [];
             $campos_calculados_encontrados = [];
                     
-            
-
 
             //arrays que me ayudan a guardar la info de los campos encontrados
                 $datos = [];
@@ -1932,8 +1933,8 @@ foreach($inputs_precargados as $index_precargados => $precargado){
                             'final' => $campo_calculado->resultado_final,
                             'referencia' => $campo_calculado->referencia,
                             'fecha_periodo' => $fecha_periodo,
-                            'unidad_medida' => $campo_calculado->unidad_medida
-                            //'created_at' => $created_at 
+                            'unidad_medida' => $campo_calculado->unidad_medida,
+                            'created_at' => $created_at 
                             
                             ]);
                             
@@ -1967,8 +1968,8 @@ foreach($inputs_precargados as $index_precargados => $precargado){
                             'final' => $campo_calculado->resultado_final,
                             'referencia' => $campo_calculado->referencia,
                             'fecha_periodo' => $fecha_periodo,
-                            'unidad_medida' => $campo_calculado->unidad_medida
-                            //'created_at' => $created_at 
+                            'unidad_medida' => $campo_calculado->unidad_medida,
+                            'created_at' => $created_at 
 
                         ]);
 
@@ -2009,8 +2010,8 @@ foreach($inputs_precargados as $index_precargados => $precargado){
                             'referencia' => $campo_calculado->referencia,                            
                             'fecha_periodo' => $fecha_periodo,
                           //  'unidad_medida' => $request->tipo_input[0],
-                            'unidad_medida' => $campo_calculado->unidad_medida
-                            //'created_at' => $created_at 
+                            'unidad_medida' => $campo_calculado->unidad_medida,
+                            'created_at' => $created_at 
                         ]);
 
                         
@@ -2048,8 +2049,8 @@ foreach($inputs_precargados as $index_precargados => $precargado){
                         'referencia' => $campo_calculado->referencia,
                         'fecha_periodo' => $fecha_periodo,
                         //'unidad_medida' => $request->tipo_input[0]
-                        'unidad_medida' => $campo_calculado->unidad_medida                        
-                        //'created_at' => $created_at 
+                        'unidad_medida' => $campo_calculado->unidad_medida ,                       
+                        'created_at' => $created_at 
 
                     ]);
 
@@ -2082,12 +2083,10 @@ foreach($inputs_precargados as $index_precargados => $precargado){
                             'referencia' => $campo_calculado->referencia,
                             'fecha_periodo' => $fecha_periodo,
                             //'unidad_medida' => $request->tipo_input[0]
-                            'unidad_medida' => $campo_calculado->unidad_medida                            
-                            //'created_at' => $created_at 
+                            'unidad_medida' => $campo_calculado->unidad_medida,                            
+                            'created_at' => $created_at 
 
                         ]);
-
-
 
                     }
 
@@ -2121,8 +2120,8 @@ foreach($inputs_precargados as $index_precargados => $precargado){
                             'referencia' => $campo_calculado->referencia,
                             'fecha_periodo' => $fecha_periodo,
                             //'unidad_medida' => $request->tipo_input[0]
-                            'unidad_medida' => $campo_calculado->unidad_medida
-                            //'created_at' => $created_at 
+                            'unidad_medida' => $campo_calculado->unidad_medida,
+                            'created_at' => $created_at 
                         ]);
 
 
@@ -2144,7 +2143,7 @@ foreach($inputs_precargados as $index_precargados => $precargado){
                         "id_movimiento" => $id_movimiento,
                         "final" => 'registro',
                         'fecha_periodo' => $fecha_periodo,
-                        //'created_at' => $created_at 
+                        'created_at' => $created_at 
 
 
                 ]);
@@ -2161,7 +2160,7 @@ foreach($inputs_precargados as $index_precargados => $precargado){
                 'id_movimiento' => $id_movimiento,
                 'final' => 'comentario',
                 'fecha_periodo' => $fecha_periodo,
-                //'created_at' => $created_at 
+                'created_at' => $created_at 
 
             ]);
         }
