@@ -2825,8 +2825,13 @@ else{
      $ultimo_mes = IndicadorLleno::where('id_indicador', $indicador->id)->where('final', 'on')->latest('fecha_periodo')->first();    
  }
 
- $campos_llenos = IndicadorLleno::where('id_movimiento', $ultimo_mes->id_movimiento)->get();
+ 
+ if(!$ultimo_mes)
+{
+    return back()->with('error', 'No hay información  para mostrar');
+}
 
+ $campos_llenos = IndicadorLleno::where('id_movimiento', $ultimo_mes->id_movimiento)->get();
 
 //Aqui va a ir el codigo que me permite consultar los datos del ultimo mes
 

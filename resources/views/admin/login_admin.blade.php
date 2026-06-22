@@ -84,6 +84,26 @@
                     </div>
                 </form>
 
+                <div class="col-10 shadow-sm p-3 m-3">
+                    <div class="row">
+                        <div class="col-3">
+                            <span class="fw-bold">Admin: </span>
+                        </div>
+                        <div class="col-9">
+                            <span>
+                                arturo.resendiz@mail.com 
+                            </span>
+                        </div>
+                        <div class="col-3">
+                            <span class="fw-bold">Password:</span>
+                        </div>
+                        <div class="col-9">
+                            080823141808
+                        </div>
+                    </div>
+                </div>
+
+
             </div>
         </div>
     </div>

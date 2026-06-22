@@ -647,7 +647,11 @@
                                                             <i class="fas fa-list-check"></i>
                                                         </div>
                                                         <div>
-                                                            <h6 class="mb-0">{{ $indicador_foraneo_agregado->nombre }}</h6>
+                                                            <h6 class="mb-0">
+                                                                <a href="{{ route('analizar.indicador', $indicador_foraneo_agregado->id) }}" class="text-decoration-none text-reset">
+                                                                    {{ $indicador_foraneo_agregado->nombre }}
+                                                                </a>
+                                                            </h6>
                                                         </div>
                                                     </div>
                                                 </td>
