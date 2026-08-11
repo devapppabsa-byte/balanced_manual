@@ -47,7 +47,7 @@
         <div class="col-12 cl-sm-12 col-md-6 col-lg-2 text-center ">
             <form action="{{route('cerrar.session')}}" method="POST">
                 @csrf
-                <button  class="btn btn-primary text-danger text-white fw-bold">
+                <button class="btn btn-danger fw-bold" data-mdb-ripple-init>
                     <i class="fa-solid fa-arrow-right-from-bracket"></i>
                     Cerrar Sesión
                 </button>
@@ -139,6 +139,14 @@
                         </div>
 
 
+
+                        <div class="ms-auto">
+                            <label class="form-label small text-muted fw-semibold mb-1">&nbsp;</label>
+                            <a href="{{ route('analizar.cruzados.vista', $indicador->id) }}" class="btn btn-dark btn-sm rounded-pill px-4">
+                                <i class="fa-solid fa-robot me-1"></i>
+                                Análisis con Inteligencia Artificial
+                            </a>
+                        </div>
 
                     </div>
                     {{-- <button type="submit" id="btn-trigger-form" style="display: none;"></button> --}}
@@ -319,7 +327,7 @@ else{
                 </div>
             </div>
         </div>
-        <div class="col-8 {{ $ultimo_mes->id_movimiento }}">
+        <div class="col-12 col-md-8 {{ $ultimo_mes->id_movimiento }}">
             <button type="button"
                     class="w-100 border-0 bg-transparent p-0"
                     data-mdb-ripple-init
@@ -944,7 +952,7 @@ else{
                                                             <span class="cascadia-code d-block">
                                                                 Año anterior {{ $item['anio']-1 }}: 
                                                                 <h4>
-                                                                    <div class="badge badge-secondary format-number">
+                                                                    <div class="badge bg-secondary format-number">
                                                                         @if (empty($campo_graficar))
                                                                             @if($indicador->unidad_medida === 'pesos')
                                                                                 ${{ number_format($prev, 2) }}
@@ -1074,9 +1082,6 @@ else{
 
                         <div class="d-flex justify-content-between align-items-center">
                             <strong>Tendencia</strong>
-                            <button class="btn btn-sm btn-light p-1" data-bs-toggle="modal" data-bs-target="#modalTendencia">
-                                <i class="fa fa-circle-info"></i>
-                            </button>
                         </div>
 
                         <div class="mt-2">
@@ -1097,9 +1102,6 @@ else{
 
                         <div class="d-flex justify-content-between align-items-center">
                             <strong>Cambio</strong>
-                            <button class="btn btn-sm btn-light p-1" data-bs-toggle="modal" data-bs-target="#modalCambio">
-                                <i class="fa fa-circle-info"></i>
-                            </button>
                         </div>
 
                         <div class="mt-2 fw-bold">
@@ -1122,9 +1124,6 @@ else{
 
                         <div class="d-flex justify-content-between align-items-center">
                             <strong>Estado actual</strong>
-                            <button class="btn btn-sm btn-light p-1" data-bs-toggle="modal" data-bs-target="#modalEstado">
-                                <i class="fa fa-circle-info"></i>
-                            </button>
                         </div>
 
                         <div class="mt-2">
@@ -1146,9 +1145,6 @@ else{
 
                         <div class="d-flex justify-content-between align-items-center">
                             <strong>Histórico</strong>
-                            <button class="btn btn-sm btn-light p-1" data-bs-toggle="modal" data-bs-target="#modalHistorico">
-                                <i class="fa fa-circle-info"></i>
-                            </button>
                         </div>
 
                         <div class="mt-2">
@@ -1171,7 +1167,7 @@ else{
 
                         <div class="d-flex justify-content-between align-items-center">
                             <strong>Estabilidad</strong>
-                            <button class="btn btn-sm btn-light p-1" data-bs-toggle="modal" data-bs-target="#modalEstabilidad">
+                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalEstabilidad">
                                 <i class="fa fa-circle-info"></i>
                             </button>
                         </div>
@@ -1194,9 +1190,6 @@ else{
 
                         <div class="d-flex justify-content-between align-items-center">
                             <strong>Proyección siguiente</strong>
-                            <button class="btn btn-sm btn-light p-1" data-bs-toggle="modal" data-bs-target="#modalProyeccion">
-                                <i class="fa fa-circle-info"></i>
-                            </button>
                         </div>
 
                         <div class="mt-2 fw-bold">
@@ -1236,7 +1229,7 @@ else{
                 <div class="card border-0 shadow-sm">
                     <div class="card-body text-center py-5">
                         <div class="mb-4">
-                            <i class="fa-solid fa-chart-line text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+                            <i class="fa-solid fa-chart-line text-muted fa-4x opacity-25"></i>
                         </div>
                         <h5 class="text-muted mb-2">No hay suficientes datos para analizar</h5>
                         <p class="text-muted mb-0">
@@ -1252,371 +1245,9 @@ else{
     </div>
 </div>
 
-{{-- Indicadores Cruzados --}}
-<div class="container-fluid mt-4">
-    <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
-            <h5 class="fw-bold mb-0">
-                <i class="fa-solid fa-link text-primary me-2"></i>
-                Indicadores Cruzados
-            </h5>
-            <button class="btn btn-primary btn-sm rounded-pill px-3"  data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalCruzarIndicadores">
-                <i class="fa-solid fa-plus me-1"></i>
-                Cruzar indicador
-            </button>
-        </div>
-        <div class="card-body">
-            @forelse ($cruzados as $cruzado)
-                <div class="d-flex align-items-center justify-content-between border rounded-3 p-3 mb-2">
-                    <div>
-                        <span class="fw-semibold">{{ $cruzado->indicadorHijo->nombre }}</span>
-                        <br>
-                        <small class="text-muted">{{ $cruzado->indicadorHijo->departamento->nombre ?? '—' }}</small>
-                    </div>
-                    <span class="badge bg-{{ $cruzado->indicadorHijo->tipo_indicador === 'riesgo' ? 'danger' : 'success' }} bg-opacity-10 text-dark px-3 py-2">
-                        {{ $cruzado->indicadorHijo->tipo_indicador ?? 'normal' }}
-                    </span>
-                </div>
-            @empty
-                <div class="text-center py-4 text-muted">
-                    <i class="fa-solid fa-link mb-2" style="font-size: 3rem; opacity: 0.3;"></i>
-                    <p class="mb-0">No hay indicadores cruzados.</p>
-                    <small>Presiona "Cruzar indicador" para agregar.</small>
-                </div>
-            @endforelse
-        </div>
-    </div>
-</div>
 
-{{-- Floating AI Analysis Box --}}
-<button id="btnFlotanteIA"
-    class="btn btn-primary rounded-circle shadow-lg position-fixed"
-    style="bottom: 1.5rem; right: 1.5rem; width: 56px; height: 56px; z-index: 1050; display: flex; align-items: center; justify-content: center;"
-    onclick="togglePanelIA()"
-    title="Análisis con IA">
-    <i class="fa-solid fa-robot" style="font-size: 1.4rem;"></i>
-</button>
-
-<div id="panelFlotanteIA"
-    class="col-7 shadow-lg rounded-4 bg-white d-flex flex-column"
-    style="position: fixed; top: 8%; left: 25%; height: 580px; z-index: 1050; display: none;">
-
-    <div class="panel-header-ia d-flex align-items-center justify-content-between bg-primary text-white px-3 py-2" style="border-radius: 1rem 1rem 0 0; flex-shrink: 0; cursor: grab;">
-        <h6 class="mb-0 fw-bold">
-            <i class="fa-solid fa-robot me-2"></i>
-            Análisis con IA
-        </h6>
-        <button type="button" class="btn btn-sm text-white p-0 border-0" onclick="cerrarPanelIA()">
-            <i class="fa-solid fa-xmark" style="font-size: 1.3rem;"></i>
-        </button>
-    </div>
-
-    <div id="chatPanelIA" class="flex-grow-1 px-3 py-2" style="overflow-y: auto; min-height: 0;">
-        <div id="contenidoPanelIA">
-            <div class="text-center py-4 text-muted">
-                <i class="fa-solid fa-robot mb-2" style="font-size: 2.5rem; opacity: 0.3;"></i>
-                @if ($cruzados->isEmpty())
-                    <p class="mb-0">No hay indicadores cruzados para analizar. Usa el botón <strong>"Cruzar indicador"</strong> en la sección de abajo para agregar uno.</p>
-                @else
-                    <p class="mb-1">Panel de análisis con IA</p>
-                    <button id="btnIniciarAnalisisIA" class="btn btn-primary rounded-pill px-4 mt-2" onclick="analizarCruzadosIA()">
-                        <i class="fa-solid fa-play me-1"></i>
-                        Iniciar análisis con IA
-                    </button>
-                @endif
-            </div>
-        </div>
-        <div id="loaderPanelIA" class="text-center py-4" style="display: none;">
-            <div class="spinner-border text-primary mb-3" role="status">
-                <span class="visually-hidden">Cargando...</span>
-            </div>
-            <p class="fw-semibold text-muted mb-0">Analizando con IA...</p>
-        </div>
-    </div>
-
-    {{-- Input para preguntar --}}
-    <div class="border-top px-3 py-2 d-flex gap-2" style="flex-shrink: 0;">
-        <input type="text" id="inputPreguntaIA" class="form-control form-control-sm" placeholder="Pregunta algo sobre el análisis...">
-        <button id="btnEnviarPregunta" class="btn btn-primary btn-sm rounded-pill px-3" onclick="enviarPregunta()">
-            <i class="fa-solid fa-paper-plane"></i>
-        </button>
-    </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    if (typeof interact !== 'undefined') {
-        interact('#panelFlotanteIA').draggable({
-            allowFrom: '.panel-header-ia',
-            listeners: {
-                move(event) {
-                    const target = event.target;
-                    const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
-                    const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-                    target.style.transform = `translate(${x}px, ${y}px)`;
-                    target.setAttribute('data-x', x);
-                    target.setAttribute('data-y', y);
-                }
-            }
-        });
-    }
-});
-</script>
-
-<script>
-let panelIAAbierto = false;
-
-function togglePanelIA() {
-    const panel = document.getElementById('panelFlotanteIA');
-    panelIAAbierto = !panelIAAbierto;
-    panel.style.display = panelIAAbierto ? 'flex' : 'none';
-    panel.classList.toggle('d-none', !panelIAAbierto);
-}
-
-function cerrarPanelIA() {
-    console.log('cerrarPanelIA ejecutado');
-    const panel = document.getElementById('panelFlotanteIA');
-    panelIAAbierto = false;
-    panel.style.display = 'none';
-    panel.classList.add('d-none');
-    console.log('display computed:', getComputedStyle(panel).display);
-}
-
-function agregarMensaje(texto, esUsuario = false, esError = false) {
-    const chat = document.getElementById('chatPanelIA');
-    const loader = document.getElementById('loaderPanelIA');
-    const contenido = document.getElementById('contenidoPanelIA');
-
-    loader.style.display = 'none';
-    contenido.style.display = 'none';
-
-    const div = document.createElement('div');
-    div.className = 'mb-3 ' + (esUsuario ? 'text-end' : '');
-
-    if (esError) {
-        div.innerHTML = '<div class="text-danger small p-2 rounded bg-danger bg-opacity-10">' + texto + '</div>';
-    } else if (esUsuario) {
-        div.innerHTML = '<div class="d-inline-block bg-primary text-white small rounded-3 px-3 py-2" style="max-width: 85%;">' + escapeHtml(texto) + '</div>';
-    } else {
-        div.innerHTML = '<div class="text-dark small p-2" style="white-space: pre-wrap; line-height: 1.5;">' + marked.parse(texto) + '</div>';
-    }
-
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
-}
-
-function analizarCruzadosIA() {
-    const chat = document.getElementById('chatPanelIA');
-    const loader = document.getElementById('loaderPanelIA');
-    const contenido = document.getElementById('contenidoPanelIA');
-
-    contenido.style.display = 'none';
-    chat.querySelectorAll('.bot-msg, .user-msg').forEach(el => el.remove());
-
-    loader.style.display = 'block';
-
-    fetch('{{ route("analizar.cruzados.ia", $indicador->id) }}', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        },
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.analisis) {
-            agregarMensaje(data.analisis);
-        } else {
-            agregarMensaje(data.error || 'Error al analizar.', false, true);
-        }
-    })
-    .catch(err => {
-        agregarMensaje('Error de conexión.', false, true);
-    });
-}
-
-function mostrarPensando() {
-    const chat = document.getElementById('chatPanelIA');
-    const div = document.createElement('div');
-    div.className = 'mb-3';
-    div.id = 'pensandoIndicator';
-    div.innerHTML = '<div class="text-muted small px-2 py-1"><span class="spinner-border spinner-border-sm me-2" role="status"></span>Pensando<span class="dots"></span></div>';
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
-}
-
-function quitarPensando() {
-    const el = document.getElementById('pensandoIndicator');
-    if (el) el.remove();
-}
-
-function enviarPregunta() {
-    const input = document.getElementById('inputPreguntaIA');
-    const pregunta = input.value.trim();
-    if (!pregunta) return;
-
-    input.value = '';
-    agregarMensaje(pregunta, true);
-    mostrarPensando();
-
-    fetch('{{ route("analizar.cruzados.ia", $indicador->id) }}', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        },
-        body: JSON.stringify({ question: pregunta }),
-    })
-    .then(res => res.json())
-    .then(data => {
-        quitarPensando();
-        if (data.analisis) {
-            agregarMensaje(data.analisis);
-        } else {
-            agregarMensaje(data.error || 'Error al obtener respuesta.', false, true);
-        }
-    })
-    .catch(err => {
-        quitarPensando();
-        agregarMensaje('Error de conexión.', false, true);
-    });
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-</script>
-<script>
-document.getElementById("inputPreguntaIA").addEventListener("keydown", function(e) {
-    if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        enviarPregunta();
-    }
-});
-</script>
-
-{{-- Fullscreen modal para cruzar indicadores --}}
-<div class="modal fade" id="modalCruzarIndicadores" tabindex="-1" aria-labelledby="modalCruzarLabel" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-fullscreen modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-primary py-4">
-                <h3 class="text-white">
-                    <i class="fa-solid fa-link me-2"></i>
-                    Indicadores Disponibles
-                </h3>
-                <button type="button" class="btn-close" data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body py-4">
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <input type="search" id="buscadorIndicadoresCruzados" class="form-control form-control-lg" placeholder="Buscar indicador...">
-                    </div>
-                </div>
-                <form action="{{ route('guardar.cruzados', $indicador->id) }}" method="POST" id="formCruzarIndicadores">
-                    @csrf
-                    <div class="row justify-content-around" id="contenedorIndicadoresCruzados">
-                        @forelse ($indicadores as $indicador_item)
-                            @if ($indicador_item->id != $indicador->id)
-                                <div class="col-3 m-1 p-3 item-indicador-cruzado"
-                                    data-nombre="{{ strtolower($indicador_item->nombre) }}">
-                                    <input type="checkbox"
-                                        name="indicadores[]"
-                                        value="{{ $indicador_item->id }}"
-                                        class="btn-check indicador-cruzado-checkbox"
-                                        id="cruzado_{{ $indicador_item->id }}"
-                                        autocomplete="off"
-                                        {{ $cruzados->contains('id_indicador_hijo', $indicador_item->id) ? 'checked' : '' }}>
-                                    <label class="btn btn-outline-primary custom-check text-start w-100 h-100"
-                                        for="cruzado_{{ $indicador_item->id }}">
-                                        <div class="text-center fw-bold">
-                                            {{ $indicador_item->nombre }}
-                                        </div>
-                                        <div class="text-muted small">
-                                            {{ $indicador_item->departamento->nombre ?? '—' }}
-                                        </div>
-                                        <div class="mb-2">
-                                            @php
-                                            $tipos = [
-                                                "g" => "<i class='fa-solid fa-city'></i> Indicador General",
-                                                "p" => "<i class='fa-solid fa-cow'></i> Pecuarios",
-                                                "m" => "<i class='fa-solid fa-dog'></i> Mascotas",
-                                            ];
-                                            @endphp
-                                            {!!
-                                                empty($indicador_item->planta)
-                                                    ? "<i class='fa-solid fa-circle-exclamation'></i> Sin asignación"
-                                                    : ($tipos[strtolower($indicador_item->planta)]
-                                                        ?? "<i class='fa-solid fa-industry'></i> Planta {$indicador_item->planta}")
-                                            !!}
-                                        </div>
-                                        <div>
-                                            @if($cruzados->contains('id_indicador_hijo', $indicador_item->id))
-                                                <span class="badge bg-success w-100">
-                                                    <i class="fa-regular fa-circle-check"></i>
-                                                    Cruzado
-                                                </span>
-                                            @else
-                                                <span class="badge bg-secondary w-100">
-                                                    Disponible
-                                                </span>
-                                            @endif
-                                        </div>
-                                    </label>
-                                </div>
-                            @endif
-                        @empty
-                            <div class="col-12 text-center py-4">
-                                <p class="text-muted">No hay indicadores disponibles.</p>
-                            </div>
-                        @endforelse
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button form="formCruzarIndicadores" type="submit" class="btn btn-primary w-100 py-3">
-                    <h6>Guardar selección</h6>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const buscador = document.getElementById('buscadorIndicadoresCruzados');
-    if (buscador) {
-        buscador.addEventListener('input', function () {
-            const filtro = this.value.toLowerCase();
-            document.querySelectorAll('.item-indicador-cruzado').forEach(item => {
-                const nombre = item.getAttribute('data-nombre');
-                item.style.display = nombre.includes(filtro) ? '' : 'none';
-            });
-        });
-    }
-});
-</script>
 @endsection
 
-
-
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
-<style>
-.dots::after {
-    content: '';
-    animation: dots 1.5s steps(3, end) infinite;
-}
-@keyframes dots {
-    0%   { content: ''; }
-    33%  { content: '.'; }
-    66%  { content: '..'; }
-    100% { content: '...'; }
-}
-</style>
 @section('scripts')
 
 

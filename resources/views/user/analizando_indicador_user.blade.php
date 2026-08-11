@@ -961,7 +961,7 @@
 
                         <div class="d-flex justify-content-between align-items-center">
                             <strong>Tendencia</strong>
-                            <button class="btn btn-sm btn-light p-1" data-bs-toggle="modal" data-bs-target="#modalTendencia">
+                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalTendencia">
                                 <i class="fa fa-circle-info"></i>
                             </button>
                         </div>
@@ -984,7 +984,7 @@
 
                         <div class="d-flex justify-content-between align-items-center">
                             <strong>Cambio</strong>
-                            <button class="btn btn-sm btn-light p-1" data-bs-toggle="modal" data-bs-target="#modalCambio">
+                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalCambio">
                                 <i class="fa fa-circle-info"></i>
                             </button>
                         </div>
@@ -1009,7 +1009,7 @@
 
                         <div class="d-flex justify-content-between align-items-center">
                             <strong>Estado actual</strong>
-                            <button class="btn btn-sm btn-light p-1" data-bs-toggle="modal" data-bs-target="#modalEstado">
+                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalEstado">
                                 <i class="fa fa-circle-info"></i>
                             </button>
                         </div>
@@ -1033,7 +1033,7 @@
 
                         <div class="d-flex justify-content-between align-items-center">
                             <strong>Histórico</strong>
-                            <button class="btn btn-sm btn-light p-1" data-bs-toggle="modal" data-bs-target="#modalHistorico">
+                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalHistorico">
                                 <i class="fa fa-circle-info"></i>
                             </button>
                         </div>
@@ -1058,7 +1058,7 @@
 
                         <div class="d-flex justify-content-between align-items-center">
                             <strong>Estabilidad</strong>
-                            <button class="btn btn-sm btn-light p-1" data-bs-toggle="modal" data-bs-target="#modalEstabilidad">
+                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalEstabilidad">
                                 <i class="fa fa-circle-info"></i>
                             </button>
                         </div>
@@ -1081,7 +1081,7 @@
 
                         <div class="d-flex justify-content-between align-items-center">
                             <strong>Proyección siguiente</strong>
-                            <button class="btn btn-sm btn-light p-1" data-bs-toggle="modal" data-bs-target="#modalProyeccion">
+                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalProyeccion">
                                 <i class="fa fa-circle-info"></i>
                             </button>
                         </div>

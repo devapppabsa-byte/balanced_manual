@@ -512,7 +512,7 @@ TODO ESTE CODIGO COMENTADO ES DE LA RESTRICCION DEL LLENADO DE INDICADORES
             @endphp
 
             <button class="btn btn-dark w-20 btn-sm"  data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#e{{$campo_lleno->id_movimiento}}"
-                    @if(!$mismoMes)" disabled onclick="alert('No se pueden eliminar registros de meses anteriores')" @endif>
+                    {{-- @if(!$mismoMes)" disabled onclick="alert('No se pueden eliminar registros de meses anteriores')" @endif  --}}>
                 <i class="fa fa-trash"></i> 
             </button>
 
@@ -1208,7 +1208,7 @@ TODO ESTE CODIGO COMENTADO ES DE LA RESTRICCION DEL LLENADO DE INDICADORES
 
                         <div class="d-flex justify-content-between align-items-center">
                             <strong>Tendencia</strong>
-                            <button class="btn btn-sm btn-light p-1" data-bs-toggle="modal" data-bs-target="#modalTendencia">
+                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalTendencia">
                                 <i class="fa fa-circle-info"></i>
                             </button>
                         </div>
@@ -1231,7 +1231,7 @@ TODO ESTE CODIGO COMENTADO ES DE LA RESTRICCION DEL LLENADO DE INDICADORES
 
                         <div class="d-flex justify-content-between align-items-center">
                             <strong>Cambio</strong>
-                            <button class="btn btn-sm btn-light p-1" data-bs-toggle="modal" data-bs-target="#modalCambio">
+                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalCambio">
                                 <i class="fa fa-circle-info"></i>
                             </button>
                         </div>
@@ -1256,7 +1256,7 @@ TODO ESTE CODIGO COMENTADO ES DE LA RESTRICCION DEL LLENADO DE INDICADORES
 
                         <div class="d-flex justify-content-between align-items-center">
                             <strong>Estado actual</strong>
-                            <button class="btn btn-sm btn-light p-1" data-bs-toggle="modal" data-bs-target="#modalEstado">
+                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalEstado">
                                 <i class="fa fa-circle-info"></i>
                             </button>
                         </div>
@@ -1280,7 +1280,7 @@ TODO ESTE CODIGO COMENTADO ES DE LA RESTRICCION DEL LLENADO DE INDICADORES
 
                         <div class="d-flex justify-content-between align-items-center">
                             <strong>Histórico</strong>
-                            <button class="btn btn-sm btn-light p-1" data-bs-toggle="modal" data-bs-target="#modalHistorico">
+                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalHistorico">
                                 <i class="fa fa-circle-info"></i>
                             </button>
                         </div>
@@ -1305,7 +1305,7 @@ TODO ESTE CODIGO COMENTADO ES DE LA RESTRICCION DEL LLENADO DE INDICADORES
 
                         <div class="d-flex justify-content-between align-items-center">
                             <strong>Estabilidad</strong>
-                            <button class="btn btn-sm btn-light p-1" data-bs-toggle="modal" data-bs-target="#modalEstabilidad">
+                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalEstabilidad">
                                 <i class="fa fa-circle-info"></i>
                             </button>
                         </div>
@@ -1328,7 +1328,7 @@ TODO ESTE CODIGO COMENTADO ES DE LA RESTRICCION DEL LLENADO DE INDICADORES
 
                         <div class="d-flex justify-content-between align-items-center">
                             <strong>Proyección siguiente</strong>
-                            <button class="btn btn-sm btn-light p-1" data-bs-toggle="modal" data-bs-target="#modalProyeccion">
+                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalProyeccion">
                                 <i class="fa fa-circle-info"></i>
                             </button>
                         </div>

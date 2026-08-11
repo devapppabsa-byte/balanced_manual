@@ -61,6 +61,12 @@ class Indicador extends Model
 
     }
 
+    public function chatIaMensajes(){
+
+        return $this->hasMany(ChatIaMensaje::class, "id_indicador");
+
+    }
+
 
     public function aux_indicadores_foraneos(){
 

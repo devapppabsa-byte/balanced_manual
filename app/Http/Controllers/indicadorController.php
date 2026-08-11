@@ -27,6 +27,7 @@ use App\Models\User;
 use App\Models\LogBalanced;
 use App\Models\MetaIndicador;
 use App\Models\IndicadorCruzado;
+use App\Models\ChatIaMensaje;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -2216,14 +2217,47 @@ foreach($inputs_precargados as $index_precargados => $precargado){
             ]);
         }
 
-        return redirect()->route('analizar.indicador', $indicador->id)
+        return redirect()->back()
             ->with('success', 'Indicadores cruzados agregados correctamente.');
+    }
+
+    public function quitar_cruzado(Request $request, Indicador $indicador)
+    {
+        $request->validate([
+            'id_cruzado' => 'required|exists:indicador_cruzado,id',
+        ]);
+
+        $cruzado = IndicadorCruzado::where('id', $request->id_cruzado)
+            ->where('id_indicador_padre', $indicador->id)
+            ->first();
+
+        if (!$cruzado) {
+            return redirect()->back()
+                ->with('error', 'El indicador cruzado no existe.');
+        }
+
+        $cruzado->delete();
+
+        return redirect()->back()
+            ->with('success', 'Indicador desvinculado correctamente.');
+    }
+
+    public function analizar_cruzados_vista(Indicador $indicador)
+    {
+        $indicadores = Indicador::all();
+        $cruzados = IndicadorCruzado::with('indicadorHijo')
+            ->where('id_indicador_padre', $indicador->id)
+            ->get();
+
+        return view('admin.analizando_cruzados', compact('indicador', 'indicadores', 'cruzados'));
     }
 
     public function analizar_cruzados_ia(Request $request, Indicador $indicador)
     {
-        $sessionKey = 'chat_ia_indicador_' . $indicador->id;
         $question = $request->input('question');
+        $fechaInicio = $request->input('fecha_inicio');
+        $fechaFin = $request->input('fecha_fin');
+        $usarRango = $fechaInicio && $fechaFin;
 
         if (!$question) {
             $cruzados = IndicadorCruzado::with('indicadorHijo')
@@ -2236,35 +2270,19 @@ foreach($inputs_precargados as $index_precargados => $precargado){
 
             $datos_para_analisis = [];
 
-            $registros_padre = IndicadorLleno::where('id_indicador', $indicador->id)
-                ->orderBy('fecha_periodo', 'desc')
-                ->take(10)
-                ->get()
-                ->map(fn($r) => [
-                    'indicador' => $indicador->nombre . ' (padre)',
-                    'mes' => Carbon::parse($r->fecha_periodo)->translatedFormat('F Y'),
-                    'campo' => $r->nombre_campo,
-                    'valor' => $r->informacion_campo,
-                ]);
+            $hijo = $indicador;
+            $registros_padre = $this->registrosIA($hijo->id, $hijo->nombre . ' (padre)', $hijo->meta_esperada, $hijo->tipo_indicador ?? 'normal', $fechaInicio, $fechaFin);
 
-            if ($registros_padre->isNotEmpty()) {
-                $datos_para_analisis[] = $registros_padre->toArray();
+            if (!empty($registros_padre['registros'])) {
+                $datos_para_analisis[] = $registros_padre;
             }
 
             foreach ($cruzados as $cruzado) {
-                $registros = IndicadorLleno::where('id_indicador', $cruzado->id_indicador_hijo)
-                    ->orderBy('fecha_periodo', 'desc')
-                    ->take(10)
-                    ->get()
-                    ->map(fn($r) => [
-                        'indicador' => $cruzado->indicadorHijo->nombre . ' (cruzado)',
-                        'mes' => Carbon::parse($r->fecha_periodo)->translatedFormat('F Y'),
-                        'campo' => $r->nombre_campo,
-                        'valor' => $r->informacion_campo,
-                    ]);
+                $hijo = $cruzado->indicadorHijo;
+                $registros = $this->registrosIA($hijo->id, $hijo->nombre . ' (cruzado)', $hijo->meta_esperada, $hijo->tipo_indicador ?? 'normal', $fechaInicio, $fechaFin);
 
-                if ($registros->isNotEmpty()) {
-                    $datos_para_analisis[] = $registros->toArray();
+                if (!empty($registros['registros'])) {
+                    $datos_para_analisis[] = $registros;
                 }
             }
 
@@ -2274,25 +2292,69 @@ foreach($inputs_precargados as $index_precargados => $precargado){
 
             $payload = json_encode($datos_para_analisis, JSON_UNESCAPED_UNICODE);
 
-            $systemMessage = "Eres un analista de KPI experto. Tus respuestas deben ser en markdown con formato limpio. Usa encabezados, listas, tablas y negritas para mejor legibilidad no uses mucho espacio entre parrafos ni mucho interlineado.";
-            $userMessage = "Analiza estos datos de múltiples indicadores KPI cruzados:\n{$payload}\n\nDame: tendencias generales, problemas identificados, recomendaciones de mejora y nivel de cumplimiento de cada uno y tambien combinalos y dime que concluciones sacas de acuerdo al resultado de cada uno, todos estos KPI tiene que ver entre si. Usa formato markdown y al final dame una tabla con los resultados de cada mes.";
+            $systemMessage = "Eres un analista de KPI experto. Tus respuestas deben ser en markdown con formato limpio. Usa encabezados, listas, tablas y negritas para mejor legibilidad no uses mucho espacio entre parrafos ni mucho interlineado. Incluye tablas markdown (formato | col1 | col2 |) para resúmenes, comparativas por mes/indicador y niveles de cumplimiento. Realiza un análisis EXTENDIDO, profundo y detallado. Para cada indicador recibes todos sus campos por periodo; la fila con 'es_resultado': true (campo marcado final='on') es el RESULTADO OFICIAL del KPI y es la que debes usar para evaluar el cumplimiento contra la 'meta_esperada', según el 'tipo' (normal = mayor es mejor; riesgo = menor es mejor). Los demás campos son contexto. Además de detectar problemas y desviaciones, debes SIEMPRE entregar sugerencias y PLANES DE ACCIÓN concretos para corregirlos, con acciones específicas, responsable sugerido y plazo, priorizados por impacto.";
+
+            $periodoTexto = $usarRango
+                ? "Periodo analizado: del {$fechaInicio} al {$fechaFin}."
+                : "Periodo analizado: últimos 10 registros por indicador.";
+            $userMessage = "Analiza de forma extendida estos datos de múltiples indicadores KPI cruzados. {$periodoTexto}\nDatos:\n{$payload}\n\nDebes dar un análisis profundo que incluya:\n1. Resumen ejecutivo general de los indicadores cruzados.\n2. Tendencias generales y estacionalidad mes a mes de cada indicador.\n3. Problemas identificados detallando indicador, periodo y magnitud del desvío.\n4. Nivel de cumplimiento de cada uno (porcentaje estimado, comparación con su meta si es detectable, y estado: cumplido/en riesgo/incumplido).\n5. Recomendaciones de mejora específicas, accionables y priorizadas por impacto.\n6. Correlación entre los indicadores: como se afectan entre sí, que relaciones causa-efecto se observan.\n7. Conclusiones globales integrando los resultados de cada KPI.\n8. Tabla final comparativa por mes de todos los indicadores.\n9. Plan de acción: por cada problema o desviación detectada, acciones de corrección concretas, responsable sugerido y plazo, priorizadas por impacto.\nUsa formato markdown y sé exhaustivo pero conciso en cada sección.";
+
+            $chatId = (ChatIaMensaje::where('id_indicador', $indicador->id)->max('chat_id') ?? 0) + 1;
+
+            ChatIaMensaje::create([
+                'id_indicador' => $indicador->id,
+                'chat_id' => $chatId,
+                'role' => 'system',
+                'content' => $systemMessage,
+            ]);
+            ChatIaMensaje::create([
+                'id_indicador' => $indicador->id,
+                'chat_id' => $chatId,
+                'role' => 'user',
+                'content' => $userMessage,
+            ]);
 
             $messages = [
                 ['role' => 'system', 'content' => $systemMessage],
                 ['role' => 'user', 'content' => $userMessage],
             ];
         } else {
-            $messages = session($sessionKey, []);
+            $chatId = ChatIaMensaje::where('id_indicador', $indicador->id)->max('chat_id');
 
-            if (empty($messages)) {
+            if (!$chatId) {
                 return response()->json(['error' => 'La conversación ha expirado. Vuelve a presionar el botón de análisis.'], 400);
+            }
+
+            ChatIaMensaje::create([
+                'id_indicador' => $indicador->id,
+                'chat_id' => $chatId,
+                'role' => 'user',
+                'content' => $question,
+            ]);
+
+            $systemFollowUp = "Eres un analista de KPI experto. El usuario hace una PREGUNTA DE SEGUIMIENTO sobre el análisis que ya entregaste. Responde ÚNICAMENTE a su pregunta, de forma concreta y en markdown. NO vuelvas a generar el análisis completo, ni el resumen ejecutivo, ni el plan de acción general, salvo que la pregunta lo pida explícitamente. Usa negritas, listas y tablas cuando aporten claridad.";
+
+            $messages = [
+                ['role' => 'system', 'content' => $systemFollowUp],
+            ];
+
+            $previos = ChatIaMensaje::where('id_indicador', $indicador->id)
+                ->where('chat_id', $chatId)
+                ->where('role', 'assistant')
+                ->orderBy('id')
+                ->get(['content']);
+
+            foreach ($previos as $p) {
+                $messages[] = ['role' => 'assistant', 'content' => $p->content];
             }
 
             $messages[] = ['role' => 'user', 'content' => $question];
         }
 
+        $messages = array_slice($messages, -40);
+
         try {
-            $response = Http::timeout(200)->withHeaders([
+            $response = Http::withOptions(['stream' => true])->timeout(200)->withHeaders([
                 'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
                 'Content-Type' => 'application/json',
                 'HTTP-Referer' => config('app.url'),
@@ -2302,28 +2364,170 @@ foreach($inputs_precargados as $index_precargados => $precargado){
             ->post('https://openrouter.ai/api/v1/chat/completions', [
                 'model' => env('OPENROUTER_MODEL', 'openai/gpt-oss-120b:free'),
                 'messages' => $messages,
-                'max_tokens' => 500,
+                'max_tokens' => 2500,
+                'stream' => true,
             ]);
 
-            $datos = $response->json();
             $status = $response->status();
 
-            if ($datos && isset($datos['choices'][0]['message']['content'])) {
-                $respuesta = $datos['choices'][0]['message']['content'];
+            if ($status !== 200) {
+                $errorMsg = $response->body();
+                \Illuminate\Support\Facades\Log::info('OpenRouter error - status: ' . $status . ' body: ' . $errorMsg);
 
-                $messages[] = ['role' => 'assistant', 'content' => $respuesta];
-                session([$sessionKey => $messages]);
-
-                return response()->json(['analisis' => $respuesta]);
+                return response()->json(['error' => 'La IA no pudo generar un análisis: ' . $errorMsg], 500);
             }
 
-            $errorMsg = is_array($datos) ? ($datos['error']['message'] ?? json_encode($datos, JSON_UNESCAPED_UNICODE)) : 'Respuesta vacía de OpenRouter';
-            \Illuminate\Support\Facades\Log::info('OpenRouter error - status: ' . $status . ' body: ' . $errorMsg);
+            return response()->stream(function () use ($response, $indicador, $chatId) {
+                @set_time_limit(0);
+                @ini_set('output_buffering', '0');
 
-            return response()->json(['error' => 'La IA no pudo generar un análisis: ' . $errorMsg], 500);
+                $body = $response->getBody();
+                $buffer = '';
+                $full = '';
+                $assistantId = null;
+
+                try {
+                    while (!$body->eof()) {
+                        $chunk = $body->read(1024);
+                        if ($chunk === '') {
+                            usleep(10000);
+                            continue;
+                        }
+
+                        $buffer .= $chunk;
+
+                        while (($pos = strpos($buffer, "\n")) !== false) {
+                            $line = trim(substr($buffer, 0, $pos));
+                            $buffer = substr($buffer, $pos + 1);
+
+                            if (!str_starts_with($line, 'data:')) {
+                                continue;
+                            }
+
+                            $data = trim(substr($line, 5));
+                            if ($data === '[DONE]') {
+                                break 2;
+                            }
+
+                            $json = json_decode($data, true);
+                            $delta = $json['choices'][0]['delta']['content'] ?? '';
+
+                            if ($delta === '') {
+                                continue;
+                            }
+
+                            $full .= $delta;
+                            echo $delta;
+                            if (ob_get_level() > 0) {
+                                ob_flush();
+                            }
+                            flush();
+
+                            if ($assistantId === null) {
+                                $assistantId = ChatIaMensaje::create([
+                                    'id_indicador' => $indicador->id,
+                                    'chat_id' => $chatId,
+                                    'role' => 'assistant',
+                                    'content' => $full,
+                                ])->id;
+                            } else {
+                                ChatIaMensaje::where('id', $assistantId)->update(['content' => $full]);
+                            }
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::info('OpenRouter stream cortado - ' . $e->getMessage());
+                }
+
+                if ($assistantId !== null) {
+                    ChatIaMensaje::where('id', $assistantId)->update(['content' => $full]);
+                }
+            }, 200, [
+                'Content-Type' => 'text/plain; charset=UTF-8',
+                'Cache-Control' => 'no-cache',
+                'X-Accel-Buffering' => 'no',
+            ]);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Error al conectar con la IA: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function chats_ia_lista(Indicador $indicador)
+    {
+        $mensajes = ChatIaMensaje::where('id_indicador', $indicador->id)
+            ->orderBy('id', 'asc')
+            ->get(['chat_id', 'role', 'content', 'created_at'])
+            ->groupBy('chat_id');
+
+        $chats = $mensajes->map(function ($msgs, $chatId) {
+            $fecha = $msgs->first()->created_at;
+
+            $preview = 'Análisis';
+            $usuarios = $msgs->filter(fn($m) => $m->role === 'user')->values();
+            if ($usuarios->count() > 1) {
+                $preview = mb_strimwidth($usuarios->get(1)->content, 0, 80, '...');
+            } else {
+                $asistente = $msgs->first(fn($m) => $m->role === 'assistant');
+                if ($asistente) {
+                    $preview = mb_strimwidth($asistente->content, 0, 80, '...');
+                }
+            }
+
+            return [
+                'chat_id' => (int) $chatId,
+                'fecha' => $fecha ? $fecha->format('d M Y H:i') : null,
+                'total_mensajes' => $msgs->count(),
+                'preview' => $preview,
+            ];
+        })->values();
+
+        return response()->json(['chats' => $chats]);
+    }
+
+    public function chat_ia_mensajes(Indicador $indicador, $chatId)
+    {
+        $mensajes = ChatIaMensaje::where('id_indicador', $indicador->id)
+            ->where('chat_id', $chatId)
+            ->orderBy('id', 'asc')
+            ->get(['role', 'content']);
+
+        return response()->json(['mensajes' => $mensajes]);
+    }
+
+    public function eliminar_chat_ia(Indicador $indicador, $chatId)
+    {
+        ChatIaMensaje::where('id_indicador', $indicador->id)
+            ->where('chat_id', $chatId)
+            ->delete();
+
+        return response()->json(['ok' => true]);
+    }
+
+    private function registrosIA(int $idIndicador, string $nombre, $meta = null, $tipo = 'normal', $desde = null, $hasta = null)
+    {
+        $query = IndicadorLleno::where('id_indicador', $idIndicador);
+
+        $usarRango = $desde && $hasta;
+        if ($usarRango) {
+            $query->whereBetween('fecha_periodo', [$desde, $hasta . ' 23:59:59']);
+        }
+
+        $registros = $query->orderBy('fecha_periodo', 'desc')
+            ->take($usarRango ? 60 : 10)
+            ->get();
+
+        return [
+            'indicador' => $nombre,
+            'meta_esperada' => $meta,
+            'tipo' => $tipo,
+            'registros' => $registros->map(fn($r) => [
+                'mes' => Carbon::parse($r->fecha_periodo)->translatedFormat('F Y'),
+                'campo' => $r->nombre_campo,
+                'valor' => $r->informacion_campo,
+                'unidad' => $r->unidad_medida,
+                'es_resultado' => $r->final === 'on',
+            ])->values()->toArray(),
+        ];
     }
 
 
