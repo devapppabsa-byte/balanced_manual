@@ -212,17 +212,22 @@
 
 @endif 
 
-
 TODO ESTE CODIGO COMENTADO ES DE LA RESTRICCION DEL LLENADO DE INDICADORES
 
 --}}
 
+    @if (Auth::user()->departamento->nombre == "Ventas")
+        {{-- ponerla solo visible para atencio al clientes --}}
+        
+            <button class="btn btn-success flotante rounded btn-lg p-3" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#llenado_indicadores">
+                <i class="fa fa-edit"></i>
+                Llenar indicador del mes
+            </button>
 
 
-    <button class="btn btn-success flotante rounded btn-lg p-3" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#llenado_indicadores">
-        <i class="fa fa-edit"></i>
-        Llenar indicador del mes
-    </button>
+    @endif
+
+
 
 
 

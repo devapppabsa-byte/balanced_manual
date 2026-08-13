@@ -285,17 +285,18 @@ $meses = DB::table('cumplimiento_norma')
  | Consulta principal
  |------------------------------------------------------------
  */
- $resultado_norma = DB::table('norma as n')
-    ->joinSub($meses, 'm', function ($join) {
-        // cross join lógico para evaluar cada norma por mes
-        $join->on(DB::raw('1'), '=', DB::raw('1'));
-    })
-    ->where('n.id_departamento', $id_dep)
-    ->select(
-        'm.mes',
-        DB::raw('
-            ROUND(
-                SUM(
+ $resultado_norma = DB::query()
+    ->fromSub(
+        DB::table('norma as n')
+            ->joinSub($meses, 'm', function ($join) {
+                // cross join lógico para evaluar cada norma por mes
+                $join->on(DB::raw('1'), '=', DB::raw('1'));
+            })
+            ->where('n.id_departamento', $id_dep)
+            ->select(
+                'm.mes',
+                'n.ponderacion',
+                DB::raw('
                     (
                         (
                             SELECT COUNT(*)
@@ -314,13 +315,17 @@ $meses = DB::table('cumplimiento_norma')
                             FROM apartado_norma an3
                             WHERE an3.id_norma = n.id
                         )
-                    ) * 100 * (n.ponderacion / 100)
-                ),
-            2) AS cumplimiento_total
-        ')
+                    ) as fraccion
+                ')
+            ),
+        't'
     )
-    ->groupBy('m.mes')
-    ->orderBy('m.mes')
+    ->select(
+        't.mes',
+        DB::raw('ROUND(SUM(t.fraccion * 100 * (t.ponderacion / 100)), 2) AS cumplimiento_total')
+    )
+    ->groupBy('t.mes')
+    ->orderBy('t.mes')
     ->get();
 
 

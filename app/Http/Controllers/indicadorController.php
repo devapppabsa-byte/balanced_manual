@@ -1598,7 +1598,22 @@ $normas = DB::table('apartado_norma as an')
         ')
     )
 
-    ->groupBy('n.id')
+    ->groupBy(
+        'n.id',
+        'n.nombre',
+        'n.descripcion',
+        'n.meta_minima',
+        'n.meta_esperada',
+        'n.ponderacion',
+        'n.planta',
+        'n.autor',
+        'n.tipo_regulacion',
+        'n.ponderacion_norma',
+        'n.id_objetivo_perspectiva',
+        'n.id_departamento',
+        'n.created_at',
+        'n.updated_at'
+    )
     ->get();
 
 
