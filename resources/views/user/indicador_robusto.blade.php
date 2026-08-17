@@ -183,7 +183,7 @@
 
 
 
-{{-- @if ($carga_excel !== $ahora  || $carga_indicador === $ahora)
+ @if ($carga_excel !== $ahora  || $carga_indicador === $ahora)
 
     @if ($carga_indicador === $ahora)
 
@@ -212,11 +212,9 @@
 
 @endif 
 
-TODO ESTE CODIGO COMENTADO ES DE LA RESTRICCION DEL LLENADO DE INDICADORES
 
---}}
 
-    @if (Auth::user()->departamento->nombre == "Ventas")
+    <!-- @if (Auth::user()->departamento->nombre == "Ventas")
         {{-- ponerla solo visible para atencio al clientes --}}
         
             <button class="btn btn-success flotante rounded btn-lg p-3" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#llenado_indicadores">
@@ -225,7 +223,7 @@ TODO ESTE CODIGO COMENTADO ES DE LA RESTRICCION DEL LLENADO DE INDICADORES
             </button>
 
 
-    @endif
+    @endif -->
 
 
 
@@ -292,7 +290,7 @@ TODO ESTE CODIGO COMENTADO ES DE LA RESTRICCION DEL LLENADO DE INDICADORES
                     
                     <div class="col-12">
                             <div class="form-group">
-                                <input type="date" name="fecha_periodo"  class="form-control">
+                                <input type="date" name="fecha_periodo" class="form-control" readonly value="{{ now()->format('Y-m-d') }}">
                             </div>
                       </div>
                     
@@ -1739,6 +1737,8 @@ datasets: [
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+
+
 
     const indicador = @json($indicador);
     const datos = @json($graficar);

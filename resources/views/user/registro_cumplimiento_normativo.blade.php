@@ -2,7 +2,10 @@
 @section('title', 'Registro de Cumplimiento Mensual')
 
 @section('contenido')
-
+@php
+    use App\Models\CumplimientoNorma;
+    use Carbon\Carbon;
+@endphp
 
 <div class="container-fluid sticky-top">
     <div class="row bg-primary d-flex align-items-center justify-content-start ">
@@ -142,10 +145,76 @@
                 @endif
             </div>
 
-            {{-- Body --}}
+
             <div class="card-body p-0">
 
                 @if (!$apartados->isEmpty())
+             
+
+
+                @php
+
+                    $mes_anterior = Carbon::now()
+                        ->subMonth()
+                        ->format('m-y');
+
+                    $ultimo_registro = CumplimientoNorma::where('mes', $mes_anterior)
+                        ->whereHas('apartado', function ($query) use ($norma) {
+                            $query->where('id_norma', $norma->id);
+                        })
+                        ->latest()
+                        ->first();
+
+                     if(isset($ultimo_registro)){
+
+                         if($ultimo_registro->mes = $mes_anterior){
+    
+                            $disposicion = "disabled";
+                            $texto = "Ya se cargo el cumplimiento normativo de este mes";
+    
+                         }   
+
+                     }   
+
+                     else{
+                            $disposicion = "vacio";
+                            $texto = "Indicador listo para ser cargado";
+                     }
+
+
+
+
+                @endphp     
+
+                <div class="row justify-content-center">
+
+                    @if ($disposicion == "disabled")
+    
+                    <div class="col-10 text-center m-3">
+                        <div class="alert alert-danger alert-sm mt-3 mb-0 d-inline-block border">
+                            <i class="fa-solid fa-circle-exclamation me-1"></i>
+                            Ya se ha registrado el cumplimiento normativo para el mes de {{ Carbon::now()->subMonth()->translatedFormat('F Y') }}.
+                        </div>
+                    </div>
+    
+                    @else
+
+                        <div class="col-10 text-center m-3">
+                            <div class="alert alert-warning alert-sm mt-3 mb-0 d-inline-block">
+                                <i class="fa-solid fa-circle-info me-1"></i>
+                                 <b> Aún no </b> se ha registrado el cumplimiento normativo para el mes de {{ Carbon::now()->subMonth()->translatedFormat('F Y') }}.
+                            </div>
+                        </div>
+                    
+    
+                    @endif
+                    
+                </div>
+                
+
+                
+
+
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light border-bottom">
@@ -184,7 +253,9 @@
                                             <input class="form-check-input"
                                             name="realizada[{{ $apartado->id }}]"
                                             value="check"
-                                            type="checkbox" value="" id="a{{ $apartado->id }}"/>
+                                            type="checkbox" value="" id="a{{ $apartado->id }}"
+                                            {{$disposicion}}
+                                            />
                                             <label class="form-check-label" for="a{{ $apartado->id }}">Realizada</label>
                                             </div>
                                         </td>
@@ -192,13 +263,14 @@
                                         <td>
                                             <div class="form-group mt-4">
                                                 <input type="file" 
-                                                name="evidencias[{{ $apartado->id }}]" multiple class="form-control" accept=".jpg,.png,.pdf,.docx,.mp4" >
+                                                name="evidencias[{{ $apartado->id }}]" multiple class="form-control" accept=".jpg,.png,.pdf,.docx,.mp4"  {{$disposicion}} >
                                             </div>                                            
                                         </td>
+
                                         <td>
                                             <div class="form-group mt-4">
                                                 <div class="form-outline" data-mdb-input-init>
-                                                <textarea class="form-control" name="descripcion[{{ $apartado->id }}]" id="text{{ $apartado->id }}" rows="4"></textarea>
+                                                <textarea class="form-control" name="descripcion[{{ $apartado->id }}]" id="text{{ $apartado->id }}" rows="4" {{$disposicion}}></textarea>
                                                 <label class="form-label" for="text{{$apartado->id}}">Descripción:</label>
                                                 </div>
                                             </div>                                            
@@ -208,15 +280,17 @@
 
 
                                         {{-- Acciones --}}
-                                        <td class="text-center pe-4">
-                                            <div class="btn-group btn-group-sm" role="group">
-                                                <a href="{{ route('ver.evidencia.cumplimiento.normativo', $apartado->id) }}"
-                                                   class="btn btn-outline-primary"
-                                                   title="Ver evidencias">
-                                                    <i class="fa-solid fa-eye"></i>
-                                                </a>
-                                            </div>
-                                        </td>
+                                
+                                            <td class="text-center pe-4">
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a href="{{ route('ver.evidencia.cumplimiento.normativo', $apartado->id) }}" 
+                                                    class="btn btn-outline-primary"
+                                                    title="Ver evidencias" >
+                                                        <i class="fa-solid fa-eye"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        
 
                                     </tr>
 
@@ -226,16 +300,9 @@
                         </table>
                     </div>
 
-                    <div class="col-12 text-center py-3 bg-danger">
-                        <div class="row justify-content-center">
-                            <div class="col-5 text-center">
-                                <input type="month" name="fecha" form="form_cumplimiento_normativo" class="form-control form-control-lg">
-                            </div>
-                        </div>
-                    </div>
 
                     <div class="col-12  text-center my-3">
-                        <button type="submit" class="btn p-3 btn-primary w-50" form="form_cumplimiento_normativo">
+                        <button type="submit" class="btn p-3 btn-primary w-50" form="form_cumplimiento_normativo" {{$disposicion}}>
                             Enviar 
                         </button>
                     </div>
@@ -305,10 +372,21 @@
                 </div>
             </div>
         </div>
-    </div>    
-@empty
+    </div> 
     
-@endforelse --}}
+    
+
+
+
+
+    
+
+@empty
+
+
+<h1>No hay apartados registrados</h1>
+    
+@endforelse
 
 
 

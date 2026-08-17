@@ -140,11 +140,17 @@
 
 
 
-                        <div class="ms-auto">
+                        <div>
                             <label class="form-label small text-muted fw-semibold mb-1">&nbsp;</label>
-                            <a href="{{ route('analizar.cruzados.vista', $indicador->id) }}" class="btn btn-dark btn-sm rounded-pill px-4">
+                            <a href="{{ route('comparar.indicador', $indicador->id) }}" class="btn btn-primary  px-4">
+                          
+                                <i class="fa-solid fa-scale-balanced me-1"></i>
+                                Comparar con otro indicador
+   
+                            </a>
+                            <a href="{{ route('analizar.cruzados.vista', $indicador->id) }}" class="btn btn-dark   px-4">
                                 <i class="fa-solid fa-robot me-1"></i>
-                                Análisis con Inteligencia Artificial
+                                Análisis con IA
                             </a>
                         </div>
 
@@ -202,113 +208,21 @@ else{
 
 
 
-<!-- Modal -->
 @if ($campos_llenos != "personalizado")
-<div class="modal fade" id="campos_indicador" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-centered">
-    <div class="modal-content">
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title" id="exampleModalLabel">Datos del mes de 
-            {{ request('mostrar_mes') ? Carbon::parse(request('mostrar_mes'))->translatedFormat('F Y')  : Carbon::parse($ultimo_mes->fecha_periodo)->translatedFormat('F Y')   }}</h5>
-        <button type="button" class="btn-close" data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        @php
-            $registro = "";
-            $nombre_registro = "";
-        @endphp
-        @forelse ($campos_llenos as $campo_lleno)
-        <div class="row p-2 justify-content-center">
-            @if ($campo_lleno->nombre_campo == 'comentario')
-            <div class="col-12 bg-light table-responsive ck-content">
-                <i class="fa-solid fa-circle-info"></i>Información Extra
-                <p>
-                    {!!  $campo_lleno->informacion_campo !!}
-                </p>
-            </div>
-
-            @elseif( $campo_lleno->nombre_campo == "Registro")
-            @php
-                $nombre_registro = $campo_lleno->nombre_campo;
-                $registro = $campo_lleno->informacion_campo;
-            @endphp
-            @else
-                @if ($campo_lleno->final == "on")
-                    
-                @else
-                    
-               
-                <div class="col-10 border boder-3 p-2 ">
-                    <h5>
-                        {{ $campo_lleno->nombre_campo }}
-                    </h5>
-                    <h6>
-
-                        @if($campo_lleno->unidad_medida === 'pesos')
-                            <div class="format-number">
-                                $ {{ number_format($campo_lleno->informacion_campo, 2) }}
-                            </div>
-
-                        @elseif($campo_lleno->unidad_medida === 'porcentaje')
-                            <div class="format-number">
-                                {{ number_format($campo_lleno->informacion_campo, 2) }} %
-                            </div>
-
-                        @elseif($campo_lleno->unidad_medida === 'dias')
-                            <div class="format-number">
-                                {{ number_format($campo_lleno->informacion_campo, 2) }} Días
-                            </div>
-
-                        @elseif($campo_lleno->unidad_medida === 'toneladas')
-                            <div class="format-number">
-                                {{ number_format($campo_lleno->informacion_campo, 2) }} Ton.
-                            </div>
-
-                        @else
-                            <div class="format-number">
-                                {{ round($campo_lleno->informacion_campo, 2) }}
-                            </div>
-                        @endif 
-
-                    </h6>
-                </div>
-             @endif
-            @endif
-
-        </div>
-
-        @empty
-            
-        @endforelse
-      </div>
-      <div class="modal-footer bg-primary text-white">
-        <div class="row  w-100 d-flex align-items-center">
-            <div class="col-6 text-left ">
-                <small class="fw-bold">
-                    <i class="fa fa-edit"></i>
-                    {{ $nombre_registro }}
-                </small>
-                <span>
-                    {{ $registro }}
-                </span>
-            </div>
-            <div class="col-6 text-end ">
-                <button type="button" class="btn btn-secondary" data-mdb-ripple-init data-mdb-dismiss="modal">Cerrar</button>
-            </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-    
-{{-- aqui esta la tarjeta que se muestra el campo seleccionado --}}
 
 <div class="container-fluid mt-3">
-    <div class="row justify-content-center">
+    @php
+        $registro = "";
+        $nombre_registro = "";
+        $campo_comentario = $campos_llenos->firstWhere('nombre_campo', 'comentario');
+    @endphp
+
+    <div class="row justify-content-center g-3">
+
         <div class="col-12">
             <div class="row justify-content-center">
-                <div class="col-3  text-center my-1 ">
-                    <h5 class="py-3 text-dark bg-white p-0 rounded-pill fw-bolder">
+                <div class="col-2  text-center my-1 ">
+                    <h5 class="py-1 text-dark bg-white p-0 rounded-pill fw-bolder">
                        <i class="fa-solid fa-bullseye text-danger"></i>
                         {{ ($indicador->tipo_indicador == 'normal') ? 'Meta' : 'Limite'  }}
                         @if($indicador->unidad_medida === 'pesos')
@@ -322,25 +236,37 @@ else{
                         @else
                             {{ $indicador->meta_esperada }}
                         @endif
-
                     </h5>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-8 {{ $ultimo_mes->id_movimiento }}">
+
+        <div class="col-12 text-center">
+            <h6 class="text-muted fw-bold mb-0">
+                Datos del mes de
+                {{ request('mostrar_mes') ? Carbon::parse(request('mostrar_mes'))->translatedFormat('F Y') : Carbon::parse($ultimo_mes->fecha_periodo)->translatedFormat('F Y') }}
+            </h6>
+        </div>
+
+        <div class="col-6 col-md-3 col-xxl-2 {{ $ultimo_mes->id_movimiento }}">
+            @if ($campo_comentario)
             <button type="button"
                     class="w-100 border-0 bg-transparent p-0"
                     data-mdb-ripple-init
                     data-mdb-modal-init
-                    data-mdb-target="#campos_indicador">
+                    data-mdb-target="#modal_info_extra">
+            @endif
 
-                <div class="card {{ $semaforo }}">
-                    <div class="card-body py-1">
-                        <h4 class="text-center fw-bold text-white">
+                <div class="card h-100 {{ $semaforo }}">
+                    <div class="card-body py-2 text-center">
+                        <div class="fw-bold text-white">
+                            @if ($campo_comentario)
+                                <i class="fa-solid fa-circle-info me-1"></i>
+                            @endif
                             {{ $ultimo_mes->nombre_campo }}
-                        </h4>
+                        </div>
 
-                        <h1 class="text-center fw-bold text-white ">
+                        <div class="fw-bold text-white fs-5">
                             @if($indicador->unidad_medida === 'pesos')
                                 ${{ number_format($ultimo_mes->informacion_campo, 2) }}
                             @elseif($indicador->unidad_medida === 'porcentaje')
@@ -352,17 +278,95 @@ else{
                             @else
                                 {{ round($ultimo_mes->informacion_campo, 2) }}
                             @endif
-                        </h1>
+                        </div>
 
-                        <h5 class="text-center fw-bold text-white text-capitalize">
+                        <div class="text-white text-capitalize small fw-semibold">
                             {{ Carbon::parse($ultimo_mes->fecha_periodo)->translatedFormat('F Y') }}
-                        </h5>
+                        </div>
                     </div>
                 </div>
+
+            @if ($campo_comentario)
             </button>
+            @endif
         </div>
     </div>
+
+    <div class="row justify-content-center g-3 mt-3">
+
+        <div class="col-12 text-center">
+            <h6 class="text-muted fw-bold mb-0">Otros datos del mes</h6>
+        </div>
+
+        @forelse ($campos_llenos as $campo_lleno)
+            @if ($campo_lleno->nombre_campo == "Registro")
+                @php
+                    $nombre_registro = $campo_lleno->nombre_campo;
+                    $registro = $campo_lleno->informacion_campo;
+                @endphp
+            @elseif ($campo_lleno->final == "on" || $campo_lleno->nombre_campo == 'comentario')
+            @else
+                <div class="col-6 col-md-3 col-xxl-2">
+                    <div class="card h-100 bg-light border-0 shadow-sm">
+                        <div class="card-body py-2 text-center">
+                            <div class="fw-bold text-dark">
+                                {{ $campo_lleno->nombre_campo }}
+                            </div>
+                            <div class="fw-bold text-primary fs-5">
+                                @if($campo_lleno->unidad_medida === 'pesos')
+                                    $ {{ number_format($campo_lleno->informacion_campo, 2) }}
+                                @elseif($campo_lleno->unidad_medida === 'porcentaje')
+                                    {{ number_format($campo_lleno->informacion_campo, 2) }} %
+                                @elseif($campo_lleno->unidad_medida === 'dias')
+                                    {{ number_format($campo_lleno->informacion_campo, 2) }} Días
+                                @elseif($campo_lleno->unidad_medida === 'toneladas')
+                                    {{ number_format($campo_lleno->informacion_campo, 2) }} Ton.
+                                @else
+                                    {{ round($campo_lleno->informacion_campo, 2) }}
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        @empty
+        @endforelse
+
+        @if ($nombre_registro)
+            <div class="col-12 d-flex align-items-center justify-content-between small fw-bold text-muted py-2">
+                <span class="text-start">
+                    <i class="fa fa-edit"></i>
+                    {{ $nombre_registro }}: {{ $registro }}
+                </span>
+            </div>
+        @endif
+
+    </div>
 </div>
+
+@if ($campo_comentario)
+<div class="modal fade" id="modal_info_extra" tabindex="-1" aria-labelledby="modalInfoExtraLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white py-3">
+        <h5 class="modal-title" id="modalInfoExtraLabel">
+            <i class="fa-solid fa-circle-info me-2"></i> Información Extra
+            <small class="d-block fw-light text-white-50">
+                {{ request('mostrar_mes') ? Carbon::parse(request('mostrar_mes'))->translatedFormat('F Y') : Carbon::parse($ultimo_mes->fecha_periodo)->translatedFormat('F Y') }}
+            </small>
+        </h5>
+        <button type="button" class="btn-close" data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body ck-content">
+        {!! $campo_comentario->informacion_campo !!}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-mdb-ripple-init data-mdb-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+@endif
 
 @else
 
@@ -412,21 +416,10 @@ else{
 
 
 
-
-
-
-
-
-
-
-
-
-
 <div class="container-fluid">
 
     @if (isset($resultado['tendencia']))
    
-
             {{-- @if($resultado['mensaje'])
                 <div class="row justify-content-center border me-1">
                     <div class="col-12 bg-white mt-3 p-3 ">
@@ -650,21 +643,21 @@ else{
                         <span class="format-number">
 
                             @if (empty($campo_graficar))
-                                @if($indicador->unidad_medida === 'pesos')
-                                $ {{ number_format($info_mes->informacion_campo, 2) }}
-                                
-                                @elseif($indicador->unidad_medida === 'porcentaje')
-                                {{ round($info_mes->informacion_campo, 2) }} %
-                                
-                                @elseif($indicador->unidad_medida === 'dias')
-                                {{ round($info_mes->informacion_campo, 2) }} Días
-                                
-                                @elseif($indicador->unidad_medida === 'toneladas')
-                                {{ round($info_mes->informacion_campo, 2) }} Ton.
-                                
-                                @else
-                                {{ round($info_mes->informacion_campo, 2) }}
-                                @endif 
+                                    @if($indicador->unidad_medida === 'pesos')
+                                    $ {{ number_format($info_mes->informacion_campo, 2) }}
+                                    
+                                    @elseif($indicador->unidad_medida === 'porcentaje')
+                                    {{ round($info_mes->informacion_campo, 2) }} %
+                                    
+                                    @elseif($indicador->unidad_medida === 'dias')
+                                    {{ round($info_mes->informacion_campo, 2) }} Días
+                                    
+                                    @elseif($indicador->unidad_medida === 'toneladas')
+                                    {{ round($info_mes->informacion_campo, 2) }} Ton.
+                                    
+                                    @else
+                                    {{ round($info_mes->informacion_campo, 2) }}
+                                    @endif 
 
                             @else
 

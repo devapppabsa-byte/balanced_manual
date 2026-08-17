@@ -26,4 +26,7 @@ class CumplimientoNorma extends Model
         return $this->belongsTo(ApartadoNorma::class, 'id_apartado_norma');
     }
 
+
+
+
 }

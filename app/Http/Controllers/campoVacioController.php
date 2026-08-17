@@ -39,7 +39,8 @@ public function agregar_campo_vacio(Request $request,Indicador $indicador){
         'autor' => $autor,
         'id_indicador' => $indicador->id,
         'unidad_medida' => $request->unidad_medida,
-        'descripcion' => $request->descripcion
+        'descripcion' => $request->descripcion,
+        'referencia' => $request->referencia === 'on' ? 'on' : null
         
     ]);
 

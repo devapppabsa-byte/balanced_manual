@@ -451,28 +451,37 @@ public function editar_campo(Request $request, $campo, $tipo_campo){
 
         $vacio = CampoVacio::findOrFail($campo);
         $old_unidad = $vacio->unidad_medida;
+        $old_referencia = $vacio->referencia;
         $vacio->unidad_medida = $request->unidad_medida;
+        $vacio->referencia = $request->referencia === 'on' ? 'on' : null;
         $vacio->update();
-        
+
+        $new_referencia = $vacio->referencia;
         
         $existe = DB::table('indicadores_llenos')
             ->where('nombre_campo', $vacio->nombre)
             ->exists();
 
-        if (!$existe) {
-            return back()->with("error", "No se encontró el campo en Indicadores Llenos");
+        if ($existe) {
+            DB::table('indicadores_llenos')
+                ->where('nombre_campo', $vacio->nombre)
+                ->update([
+                    'unidad_medida' => $request->unidad_medida,
+                    'referencia' => $new_referencia
+            ]);
         }
 
-        DB::table('indicadores_llenos')
-            ->where('nombre_campo', $vacio->nombre)
-            ->update([
-                'unidad_medida' => $request->unidad_medida
-        ]);
+        $cambio_unidad = " - Unidad: '{$old_unidad}' -> '{$request->unidad_medida}'";
+        $ref_vieja = $old_referencia ?? 'NULL';
+        $ref_nueva = $new_referencia ?? 'NULL';
+        $cambio_referencia = (string) $ref_vieja !== (string) $ref_nueva
+            ? " - Referencia: '{$ref_vieja}' -> '{$ref_nueva}'"
+            : '';
 
         LogBalanced::create([
             'autor' => $autor_log,
             'accion' => "update",
-            'descripcion' => "Se edito el campo vacio: '{$vacio->nombre}' - Unidad: '{$old_unidad}' -> '{$request->unidad_medida}'",
+            'descripcion' => "Se edito el campo vacio: '{$vacio->nombre}'{$cambio_unidad}{$cambio_referencia}",
             'ip' => request()->ip()
         ]);
 
@@ -489,28 +498,37 @@ public function editar_campo(Request $request, $campo, $tipo_campo){
 
         $calculado = CampoCalculado::findOrFail($campo);
         $old_unidad = $calculado->unidad_medida;
+        $old_referencia = $calculado->referencia;
         $calculado->unidad_medida = $request->unidad_medida;
+        $calculado->referencia = $request->referencia === 'on' ? 'on' : null;
         $calculado->update();
 
+        $new_referencia = $calculado->referencia;
 
         $existe = DB::table('indicadores_llenos')
             ->where('nombre_campo', $calculado->nombre)
             ->exists();
 
-        if (!$existe) {
-            return back()->with("error", "No se encontró el campo en Indicadores Llenos");
+        if ($existe) {
+            DB::table('indicadores_llenos')
+                ->where('nombre_campo', $calculado->nombre)
+                ->update([
+                    'unidad_medida' => $request->unidad_medida,
+                    'referencia' => $new_referencia
+            ]);
         }
 
-        DB::table('indicadores_llenos')
-            ->where('nombre_campo', $calculado->nombre)
-            ->update([
-                'unidad_medida' => $request->unidad_medida
-        ]);
+        $cambio_unidad = " - Unidad: '{$old_unidad}' -> '{$request->unidad_medida}'";
+        $ref_vieja = $old_referencia ?? 'NULL';
+        $ref_nueva = $new_referencia ?? 'NULL';
+        $cambio_referencia = (string) $ref_vieja !== (string) $ref_nueva
+            ? " - Referencia: '{$ref_vieja}' -> '{$ref_nueva}'"
+            : '';
 
         LogBalanced::create([
             'autor' => $autor_log,
             'accion' => "update",
-            'descripcion' => "Se edito el campo calculado: '{$calculado->nombre}' - Unidad: '{$old_unidad}' -> '{$request->unidad_medida}'",
+            'descripcion' => "Se edito el campo calculado: '{$calculado->nombre}'{$cambio_unidad}{$cambio_referencia}",
             'ip' => request()->ip()
         ]);
 
@@ -605,7 +623,7 @@ $graficar = IndicadorLleno::where('id_indicador', $indicador->id)
 
             else{
 
-                if(in_array($campo_graficar, json_decode($campos_referencia))){
+                if(in_array($campo_graficar, $campos_referencia->toArray())){
                     $q->where('nombre_campo', $campo_graficar);
                 }
     
@@ -1787,6 +1805,8 @@ public function llenado_informacion_indicadores(Indicador $indicador, Request $r
 
 
 //EN ESTA PARTE SE CARGAN LOS CAMPOS VACIOS AL INDICADORE LLENO....
+        $campos_vacios_referencia = CampoVacio::where('id_indicador', $indicador->id)->pluck('referencia', 'id');
+
         for($i=0 ; $i < count($request->informacion_indicador) ; $i++ ){
         
             InformacionInputVacio::create([
@@ -1810,6 +1830,7 @@ public function llenado_informacion_indicadores(Indicador $indicador, Request $r
                 "id_movimiento" => $id_movimiento,
                 'fecha_periodo' => $fecha_periodo,
                 'unidad_medida' => $request->tipo_input[0],
+                'referencia' => $campos_vacios_referencia[$request->id_input[$i]] ?? null,
                 'created_at' => $created_at 
             ]);
 
@@ -2788,7 +2809,7 @@ $graficar = IndicadorLleno::where('id_indicador', $indicador->id)
 
             else{
 
-                if(in_array($campo_graficar, json_decode($campos_referencia))){
+                if(in_array($campo_graficar, $campos_referencia->toArray())){
                     $q->where('nombre_campo', $campo_graficar);
                 }
     
@@ -3139,7 +3160,7 @@ $graficar = IndicadorLleno::where('id_indicador', $indicador->id)
 
             else{
 
-                if(in_array($campo_graficar, json_decode($campos_referencia))){
+                if(in_array($campo_graficar, $campos_referencia->toArray())){
                     $q->where('nombre_campo', $campo_graficar);
                 }
     
@@ -3516,7 +3537,7 @@ $graficar = IndicadorLleno::where('id_indicador', $indicador->id)
 
             else{
 
-                if(in_array($campo_graficar, json_decode($campos_referencia))){
+                if(in_array($campo_graficar, $campos_referencia->toArray())){
                     $q->where('nombre_campo', $campo_graficar);
                 }
     
@@ -3843,9 +3864,108 @@ else{
 
 
 
+public function comparar_indicador(Request $request, Indicador $indicador)
+{
+    $indicadores = Indicador::with('departamento')
+        ->where('id', '!=', $indicador->id)
+        ->orderBy('nombre')
+        ->get();
+
+    $inicio = $request->filled('fecha_inicio')
+        ? Carbon::parse($request->input('fecha_inicio'), config('app.timezone'))
+            ->startOfDay()
+            ->utc()
+        : Carbon::now(config('app.timezone'))
+            ->startOfYear()
+            ->utc();
+
+    $fin = $request->filled('fecha_fin')
+        ? Carbon::parse($request->input('fecha_fin'), config('app.timezone'))
+            ->endOfDay()
+            ->utc()
+        : Carbon::now(config('app.timezone'))
+            ->endOfYear()
+            ->utc();
+
+    $actual = $this->datosComparacion($indicador, $inicio, $fin);
+
+    $comparado = null;
+    if ($request->filled('con') && $request->input('con') != $indicador->id) {
+        $otro = Indicador::find($request->input('con'));
+
+        if ($otro) {
+            $comparado = $this->datosComparacion($otro, $inicio, $fin);
+        }
+    }
+
+    $tipo = in_array($request->input('tipo'), ['line', 'bar', 'doughnut'], true)
+        ? $request->input('tipo')
+        : 'line';
+
+    return view('admin.comparar_indicador', compact('indicador', 'indicadores', 'actual', 'comparado', 'inicio', 'fin', 'tipo'));
+}
+
+private function datosComparacion(Indicador $indicador, $inicio, $fin)
+{
+    $registros = IndicadorLleno::where('id_indicador', $indicador->id)
+        ->where('final', 'on')
+        ->whereBetween('fecha_periodo', [$inicio, $fin])
+        ->orderBy('fecha_periodo', 'asc')
+        ->get();
+
+    $datos_por_mes = $registros->mapWithKeys(function ($item) {
+        return [Carbon::parse($item->fecha_periodo)->format('Y-m') => (float) $item->informacion_campo];
+    });
+
+    $meses = array_keys($datos_por_mes->toArray());
+
+    $promedio = $registros->count() > 0
+        ? $registros->avg('informacion_campo')
+        : null;
+
+    $resultado = $this->calcularTendenciaKPI($indicador->id, $indicador->meta_esperada, $indicador->tipo_indicador, $inicio, $fin);
+
+    $mejor_mes = null;
+    $peor_mes = null;
+
+    $registros_best = $registros->map(function ($item) {
+        return [
+            'mes' => Carbon::parse($item->fecha_periodo)->locale('es')->translatedFormat('F'),
+            'anio' => (int) Carbon::parse($item->fecha_periodo)->format('Y'),
+            'valor' => (float) $item->informacion_campo,
+        ];
+    });
+
+    if ($registros_best->count() > 0) {
+        if ($indicador->tipo_indicador == 'riesgo') {
+            $peor_mes = $registros_best->sortByDesc('valor')->first();
+            $mejor_mes = $registros_best->sortBy('valor')->first();
+        } else {
+            $mejor_mes = $registros_best->sortByDesc('valor')->first();
+            $peor_mes = $registros_best->sortBy('valor')->first();
+        }
+    }
+
+    return [
+        'indicador'        => $indicador,
+        'registros'        => $registros,
+        'datos_por_mes'    => $datos_por_mes,
+        'meses'            => $meses,
+        'promedio'         => $promedio,
+        'resultado'        => $resultado,
+        'mejor_mes'        => $mejor_mes,
+        'peor_mes'         => $peor_mes,
+    ];
+}
 
 
-function calcularTendenciaKPI( $indicadorId, $meta, $tipo = 'normal', $inicio, $fin)
+
+
+
+
+
+
+function calcularTendenciaKPI($indicadorId, $meta, $tipo, $inicio, $fin)
 {
     // =========================
     // 1. OBTENER DATOS

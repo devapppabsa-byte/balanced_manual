@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
 use Carbon\Carbon;
+use Illuminate\Contracts\Foundation\ExceptionRenderer;
+use Illuminate\Foundation\Exceptions\Whoops\WhoopsExceptionRenderer;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -13,7 +15,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        if ($this->app->hasDebugModeEnabled()) {
+            $this->app->singleton(ExceptionRenderer::class, WhoopsExceptionRenderer::class);
+        }
     }
 
     /**
@@ -22,15 +26,15 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Carbon::setLocale('es');
-        
-        //con esta linea ayuda a que mis estillos se vean en ngrok y en local
+
+        // con esta linea ayuda a que mis estillos se vean en ngrok y en local
         if (str_contains(request()->getHost(), 'ngrok')) {
             URL::forceScheme('https');
         }
 
-         if (app()->environment('production')) {
-        URL::forceScheme('https');
-    }
+        if (app()->environment('production')) {
+            URL::forceScheme('https');
+        }
 
     }
 }

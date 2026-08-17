@@ -518,6 +518,14 @@ OS --}}
     
                         </select>
                     </div>
+
+                    <div class="form-check form-switch mt-3">
+                        <input class="form-check-input" type="checkbox" name="referencia" value="on" id="referencia_calculado{{ $campo_calculado->id }}"
+                            {{ $campo_calculado->referencia === 'on' ? 'checked' : '' }}>
+                        <label class="form-check-label" for="referencia_calculado{{ $campo_calculado->id }}">
+                            Campo de referencia
+                        </label>
+                    </div>
                     
                     <div class="form-group mt-3">
                         <button  class="btn btn-primary w-100 py-3" data-mdb-ripple-init>
@@ -743,6 +751,14 @@ OS --}}
                             </option>
     
                         </select>
+                    </div>
+
+                    <div class="form-check form-switch mt-3">
+                        <input class="form-check-input" type="checkbox" name="referencia" value="on" id="referencia_vacio{{ $campo_vacio->id }}"
+                            {{ $campo_vacio->referencia === 'on' ? 'checked' : '' }}>
+                        <label class="form-check-label" for="referencia_vacio{{ $campo_vacio->id }}">
+                            Campo de referencia
+                        </label>
                     </div>
                     
                     <div class="form-group mt-3">
@@ -1655,6 +1671,13 @@ OS --}}
                                 <textarea name="descripcion" class="form-control w-100 " id="descripcion"></textarea>
                                 <label class="form-label" for="descripcion" >Descripción </label>
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 mt-2">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="referencia" value="on" id="referencia_campo_vacio">
+                            <label class="form-check-label" for="referencia_campo_vacio">Campo de referencia</label>
                         </div>
                     </div>
 

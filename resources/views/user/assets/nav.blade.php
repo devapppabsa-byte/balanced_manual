@@ -29,7 +29,10 @@
             Cumplimiento Normativo 
         </a>
     </div>
+    
 
+    
+    
     <div class="col-auto  zoom_link {{ request()->routeIs('indicadores.foraneos.user') ? 'link_selected' : '' }}">
         <a href="{{route("indicadores.foraneos.user")}}" class="btn btn-transparent text-white text-decoration-none fw-bold ">
             <i class="fa-solid fa-arrows-down-to-people mx-1"></i>

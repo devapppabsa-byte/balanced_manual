@@ -37,7 +37,10 @@ Route::get('/perfil_usuario/indicador_robusto/{indicador}', [indicadorController
 
 Route::get('/perfil_usuario/cumplimiento_normativo/', [normaController::class, 'cumplimiento_normativo_user'])->name('cumplimiento.normativo.user')->middleware('auth');
 
+
 Route::get('/perfil_usuario/cumplimiento_normativo/registro_cumplimiento_normativo/{norma}', [apartadoNormaController::class, 'registro_cumplimiento_normativa_index'])->name('registro.cumplimiento.normativa.index')->middleware('auth');
+
+
 
 Route::post('/perfil_usuario/cumplimiento_normativo/registro_cumplimiento_normativo/resgistro_actividad/', [apartadoNormaController::class, 'registro_actividad_cumplimiento_norma'])->name('registro.actividad.cumplimiento.norma')->middleware('auth');
 
@@ -367,6 +370,8 @@ Route::get('perfil_admin/lista_indicadores/escudriñando_indicador/{indicador}/c
 Route::delete('perfil_admin/lista_indicadores/escudriñando_indicador/{indicador}/cruzados-chat/{chatId}', [indicadorController::class, 'eliminar_chat_ia'])->name('chat.ia.eliminar')->middleware("auth:admin");
 
 Route::get('perfil_admin/lista_indicadores/estacionalidad_indicador/{indicador}', [indicadorController::class, 'estacionalidad_show'])->name('estacionalidad.show');
+
+Route::get('perfil_admin/lista_indicadores/escudriñando_indicador/{indicador}/comparar', [indicadorController::class, 'comparar_indicador'])->name('comparar.indicador')->middleware("auth:admin");
 
 
 

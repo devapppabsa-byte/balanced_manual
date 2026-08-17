@@ -190,7 +190,6 @@ class apartadoNormaController extends Controller
 
 public function registro_actividad_cumplimiento_norma(Request $request){
     
-    
     //Esta variable se usa para el LOG
     $autor = 'Id: '.auth()->user()->id.' - '.auth()->user()->name.' - '.auth()->user()->puesto;
     
@@ -198,19 +197,33 @@ public function registro_actividad_cumplimiento_norma(Request $request){
     Carbon::setLocale('es'); // Establece el idioma a español
     setlocale(LC_TIME, 'es_ES.UTF-8'); // Asegura que PHP use el locale correcto (depende del servidor)
     
-    $mes = Carbon::now()->translatedFormat('F Y');
-    $mes = Carbon::parse($request->fecha)->translatedFormat('m-y');
-
+    $mes = Carbon::now()->subMonth()->translatedFormat('m-y'); // Obtiene el mes actual en español
+    // $mes = Carbon::parse($request->fecha)->translatedFormat('m-y');
+    
     //esta es la lista de a´partados, apartir de esta lista se creara el ciclo.    
     $lista_apartados = array_keys($request->realizada);
     $keys_descripciones = array_keys($request->descripcion);
     $keys_realizada = array_keys($request->realizada);
     if($request->evidencias != null) $keys_evidencias = array_keys($request->evidencias);
-
+    
     //y si solo recorro los apartados que sten marcados como realizados
-
     
     foreach($lista_apartados as $apartado_id){
+
+
+
+             $esiste_registro = CumplimientoNorma::where('mes', $mes)
+                ->where('id_apartado_norma', $apartado_id)
+                ->first();
+                
+
+            if(isset($existe_registro)){
+                return back()->with('error', 'Ya existe un registro de cumplimiento para el apartado con ID: '.$apartado_id.' en el mes: '.$mes);
+            }
+
+
+
+
 
             //si el apartado es marcado como "Realizado"  busco a ver si tiene descripcion
             if(in_array($apartado_id, $keys_descripciones)){
@@ -268,11 +281,18 @@ public function registro_actividad_cumplimiento_norma(Request $request){
     }
 
 
+
+
+
+
+
+
     public function ver_evidencia_cumplimiento_normativo(ApartadoNorma $apartado){
 
 
         $cumplimientos = CumplimientoNorma::with('evidencia_cumplimiento_norma')
         ->where('id_apartado_norma', $apartado->id)
+
         ->get()
         ->sortByDesc(function ($item) {
             return Carbon::createFromFormat('m-y', $item->mes);
