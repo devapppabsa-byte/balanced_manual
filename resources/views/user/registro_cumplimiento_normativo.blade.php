@@ -199,12 +199,12 @@
     
                     @else
 
-                        <div class="col-10 text-center m-3">
+                        {{-- <div class="col-10 text-center m-3">
                             <div class="alert alert-warning alert-sm mt-3 mb-0 d-inline-block">
                                 <i class="fa-solid fa-circle-info me-1"></i>
                                  <b> Aún no </b> se ha registrado el cumplimiento normativo para el mes de {{ Carbon::now()->subMonth()->translatedFormat('F Y') }}.
                             </div>
-                        </div>
+                        </div> --}}
                     
     
                     @endif

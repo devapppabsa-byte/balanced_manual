@@ -203,23 +203,26 @@
         <div class="tab-content">
 
           <div class="tab-pane fade show active" id="tab-barras">
-            <canvas id="chartBar" height="120"></canvas>
+            <div style="position: relative; height: 300px;">
+              <canvas id="chartBar"></canvas>
+            </div>
           </div>
 
           <div class="tab-pane fade" id="tab-linea">
-            <canvas id="chartLine" height="120"></canvas>
+            <div style="position: relative; height: 300px;">
+              <canvas id="chartLine"></canvas>
+            </div>
           </div>
 
           <div class="tab-pane fade" id="tab-pie" >
-            <div class="p-5 text-center row justify-content-center" style="max-height: 700px">
-                <canvas id="chartPie" height="120"></canvas>
+            <div style="position: relative; height: 300px;">
+              <canvas id="chartPie"></canvas>
             </div>
-          
-        </div>
+          </div>
 
           <div class="tab-pane fade" id="tab-donut">
-            <div class="p-5 text-center row justify-content-center" style="max-height: 700px">
-                <canvas id="chartDonut" height="120"></canvas>
+            <div style="position: relative; height: 300px;">
+              <canvas id="chartDonut"></canvas>
             </div>
           </div>
 
@@ -282,6 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       scales: {
         y: { beginAtZero: true, max: 100 }
       }
@@ -346,7 +350,7 @@ new Chart(document.getElementById('chartLine'), {
     },
     options:{
         responsive:true,
-        maininAspectRatio: false,
+        maintainAspectRatio: false,
         plugins: {
             legend: {
                 position: 'bottom'
@@ -374,7 +378,7 @@ new Chart(document.getElementById('chartLine'), {
     },
     options:{
         responsive:true,
-        maininAspectRatio: false,
+        maintainAspectRatio: false,
         plugins: {
             legend: {
                 position: 'bottom'

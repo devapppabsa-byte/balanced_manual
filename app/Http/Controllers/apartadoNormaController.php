@@ -52,6 +52,8 @@ class apartadoNormaController extends Controller
     public function registro_cumplimiento_normativa_index(Norma $norma){
 
 
+
+
         $apartados = ApartadoNorma::where('id_norma',$norma->id)->get();
 
         //mega grafica
@@ -190,6 +192,12 @@ class apartadoNormaController extends Controller
 
 public function registro_actividad_cumplimiento_norma(Request $request){
     
+    if(!isset($request->realizada)) {
+        return back()->with("error", "Se debe marcar almenos un apartado para marcar cumplimiento");
+    }
+
+
+
     //Esta variable se usa para el LOG
     $autor = 'Id: '.auth()->user()->id.' - '.auth()->user()->name.' - '.auth()->user()->puesto;
     

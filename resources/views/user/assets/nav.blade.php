@@ -30,8 +30,7 @@
         </a>
     </div>
     
-
-    
+   
     
     <div class="col-auto  zoom_link {{ request()->routeIs('indicadores.foraneos.user') ? 'link_selected' : '' }}">
         <a href="{{route("indicadores.foraneos.user")}}" class="btn btn-transparent text-white text-decoration-none fw-bold ">
