@@ -54,6 +54,9 @@
                 <div class="card-header bg-primary text-white text-center py-4">
                     <h4 class="mb-0">
                         Respuestas de <span class="fw-bold">{{ $cliente->nombre }}</span>
+                        @if ($fecha_contestacion)
+                            <span class="d-block fs-6 fw-light">Contestación del {{ $fecha_contestacion }}</span>
+                        @endif
                     </h4>
                 </div>
 

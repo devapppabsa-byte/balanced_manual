@@ -10,6 +10,7 @@ class ChatIaMensaje extends Model
 
     protected $fillable = [
         'id_indicador',
+        'id_user',
         'chat_id',
         'role',
         'content',

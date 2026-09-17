@@ -88,13 +88,13 @@
             @php
                 $contador = 0;
                 $suma = 0;
-
                 $resultado = [];
+                $mesAnterior = now()->subMonth()->format('Y-m');
             @endphp
 
             @foreach($indicador->indicadorLleno as $indicador_lleno)
 
-                @if ($indicador_lleno->final == 'on')
+                @if ($indicador_lleno->final == 'on' && str_starts_with($indicador_lleno->fecha_periodo, $mesAnterior))
 
                     @php
                         $contador++;
@@ -108,12 +108,24 @@
                 
 
 
-            @if ($contador > 0)
             @php
-                $cumplimiento = end($resultado);
+                $cumplimiento = $resultado ? end($resultado) : 0;
+
+                if ($indicador->tipo_indicador === 'riesgo') {
+                    $porcentaje = $cumplimiento > 0 ? round(($indicador->meta_minima / $cumplimiento) * 100, 2) : 0;
+                } else {
+                    $porcentaje = $indicador->meta_esperada != 0 ? round(($cumplimiento / $indicador->meta_esperada) * 100, 2) : 0;
+                }
+
+                if ($indicador->variacion === 'on') {
+                    $estado = ($cumplimiento >= $indicador->meta_esperada - $indicador->meta_minima
+                            && $cumplimiento <= $indicador->meta_esperada + $indicador->meta_minima) ? 'ok' : 'mal';
+                } elseif ($indicador->tipo_indicador === 'riesgo') {
+                    $estado = $cumplimiento < $indicador->meta_minima ? 'ok' : 'mal';
+                } else {
+                    $estado = $cumplimiento > $indicador->meta_minima ? 'ok' : 'mal';
+                }
             @endphp
-
-
 
                  @if ($indicador->variacion === 'on')
                     
@@ -122,8 +134,10 @@
                     <div class="card text-white {{($cumplimiento >= ($indicador->meta_esperada - $indicador->meta_minima)&& $cumplimiento <= ($indicador->meta_esperada + $indicador->meta_minima)) ? 'bg-success' : 'bg-danger'}} shadow-2-strong" data-tipo="indicador"
                     data-nombre="{{ $indicador->nombre }}"
                     data-valor="{{ $cumplimiento }}"
+                    data-estado="{{ $estado }}"
                     data-meta-min="{{ $indicador->meta_minima }}"
                     data-meta-max="{{ $indicador->meta_esperada }}"
+                    data-unidad="{{ $indicador->unidad_medida }}"
                     data-clase="{{ $indicador->variacion === 'on' ? 'variacion' : ($indicador->tipo_indicador === 'riesgo' ? 'riesgo' : 'normal') }}">
                     
                     
@@ -165,12 +179,12 @@
                                         <div class="col-auto">
                                             <span>
                                                 <i class="fa fa-arrow-up"></i>
-                                                Meta: {{ $indicador->meta_esperada }}
+                                                Meta: {{ round($indicador->meta_esperada, 2) }}
                                             </span>
                                         </div>
                                         <div class="col-auto">
                                             <i class="fa-solid fa-up-down"></i>
-                                            <span>Variacion: {{ $indicador->meta_minima }}</span>
+                                            <span>Variacion: {{ round($indicador->meta_minima, 2) }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -212,8 +226,10 @@
                 <div class="col-10 col-sm-10 col-md-6 col-lg-4 my-3">
                     <div class="card text-white {{($cumplimiento < $indicador->meta_minima) ? 'bg-success' : 'bg-danger'}} shadow-2-strong" data-tipo="indicador" data-nombre="{{ $indicador->nombre }}"
                     data-valor="{{ $cumplimiento }}"
+                    data-estado="{{ $estado }}"
                     data-meta-min="{{ $indicador->meta_minima }}"
                     data-meta-max="{{ $indicador->meta_esperada }}"
+                    data-unidad="{{ $indicador->unidad_medida }}"
                     data-clase="riesgo">
                         <a href="{{route('indicador.lleno.show.admin', $indicador->id)}}" class="text-white w-100">
 
@@ -253,13 +269,13 @@
                                 <div class="col-auto text-center">
                                     <span>
                                         <i class="fa fa-arrow-up"></i>
-                                        Metas: {{ $indicador->meta_esperada }}
+                                        Metas: {{ round($indicador->meta_esperada, 2) }}
                                     </span>
                                 </div>
                                 <div class="col-auto text-center">
                                     <span class="mx-5">
                                         <i class="fa-solid fa-circle-down"></i>
-                                        Limite: {{ $indicador->meta_minima }}
+                                        Limite: {{ round($indicador->meta_minima, 2) }}
                                     </span>
                                 </div>
                             </div>
@@ -296,9 +312,11 @@
                         <div class="card text-white {{($cumplimiento <= $indicador->meta_minima) ? 'bg-danger' : 'bg-success'}} shadow-2-strong"
                         data-tipo="indicador"
                         data-nombre="{{ $indicador->nombre }}"
-                        data-valor="{{ number_format($cumplimiento ?? 0, 2) }}"
+                        data-valor="{{ $cumplimiento }}"
+                        data-estado="{{ $estado }}"
                         data-meta-min="{{ $indicador->meta_minima }}"
                         data-meta-max="{{ $indicador->meta_esperada }}"
+                        data-unidad="{{ $indicador->unidad_medida }}"
                         data-clase="normal">
                             <a href="{{route('indicador.lleno.show.admin', $indicador->id)}}" class="text-white w-100">
                             <div class="card-body">
@@ -337,13 +355,13 @@
                                     <div class="col-auto text-center">
                                         <span>
                                             <i class="fa fa-arrow-up"></i>
-                                            Meta: {{ $indicador->meta_esperada }}
+                                            Meta: {{ round($indicador->meta_esperada, 2) }}
                                         </span>
                                     </div>
                                     <div class="col-auto text-center">
                                         <span class="mx-5">
                                             <i class="fa-solid fa-circle-down"></i>
-                                            Min.: {{ $indicador->meta_minima }}
+                                            Min.: {{ round($indicador->meta_minima, 2) }}
                                         </span>
                                     </div>
                                 </div>
@@ -375,31 +393,6 @@
 
   
                 @endif
-
-                @else
-
-                    <div class="col-10 col-sm-10 col-md-6 col-lg-4 my-3">
-                        <div class="card text-white bg-dark shadow-2-strong">
-                            <a href="{{route('indicador.lleno.show.admin', $indicador->id)}}" class="text-white w-100">
-                            <div class="card-body">
-                                <div class="row justify-content-around d-flex align-items-center">
-                                    <div class="col-12 col-sm-12 col-md-12 col-lg-7 ">
-                                        <h5 class="card-title fw-bold  x">
-                                            Sin registros aún.
-                                        </h5>
-                                        <p class="card-text fw-bold">{{$indicador->nombre}}</p>
-                                    </div>
-                                    <div class="col-12 col-sm-12 col-md-12 col-lg-4 p-0 m-0">
-                                        <i class="fas fa-chart-line fa-3x"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            </a>
-                        </div>
-                    </div>
-                    
-                @endif 
-
 
         @empty
 
@@ -862,8 +855,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const item = {
             nombre: card.dataset.nombre,
             valor: parseFloat(card.dataset.valor) || 0,
+            estado: card.dataset.estado,
             meta_min: parseFloat(card.dataset.metaMin),
             meta_max: parseFloat(card.dataset.metaMax),
+            unidad: card.dataset.unidad,
             clase: card.dataset.clase
         };
 
@@ -878,20 +873,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getColor(item) {
-        if (item.clase === 'variacion') {
-            return (item.valor >= (item.meta_max - item.meta_min) &&
-                    item.valor <= (item.meta_max + item.meta_min))
-                ? 'rgba(25, 135, 84, 0.8)'
-                : 'rgba(220, 53, 69, 0.8)';
+        return (item.estado === 'ok')
+            ? 'rgba(25, 135, 84, 0.8)'
+            : 'rgba(220, 53, 69, 0.8)';
+    }
+
+    function formatearValorUnidad(valor, unidad) {
+        const numero = Number(valor).toFixed(2);
+        switch (unidad) {
+            case 'pesos': return '$' + numero;
+            case 'porcentaje': return numero + '%';
+            case 'dias': return numero + ' Días';
+            case 'toneladas': return numero + ' Ton.';
+            default: return numero;
         }
-        if (item.clase === 'riesgo') {
-            return (item.valor < item.meta_min)
-                ? 'rgba(25, 135, 84, 0.8)'
-                : 'rgba(220, 53, 69, 0.8)';
+    }
+
+    function dividirNombre(nombre, max = 20) {
+        if (!nombre) return '';
+        if (nombre.length <= max) return nombre;
+
+        const palabras = nombre.split(' ');
+        const lineas = [];
+        let linea = '';
+
+        for (const palabra of palabras) {
+            if ((linea + ' ' + palabra).trim().length > max && linea) {
+                lineas.push(linea.trim());
+                linea = palabra;
+            } else {
+                linea = (linea + ' ' + palabra).trim();
+            }
         }
-        return (item.valor <= item.meta_min)
-            ? 'rgba(220, 53, 69, 0.8)'
-            : 'rgba(25, 135, 84, 0.8)';
+
+        if (linea) lineas.push(linea.trim());
+        return lineas.join('\n');
     }
 
     // Configuración base para DataLabels (Evita repetición)
@@ -916,7 +932,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return (value === 0 || (bar && bar.height < 50)) ? '#000' : '#fff';
         },
         font: { weight: 'bold', size: 18 },
-        formatter: (value) => value + '%',
+        formatter: (value) => Number(value).toFixed(2) + '%',
         clamp: true,
         clip: false
     };
@@ -927,7 +943,7 @@ document.addEventListener('DOMContentLoaded', () => {
     new Chart(document.getElementById('chartIndicadores'), {
         type: 'bar',
         data: {
-            labels: indicadores.map(i => truncarTexto(i.nombre)),
+            labels: indicadores.map(i => i.nombre),
             datasets: [{
                 data: indicadores.map(i => i.valor),
                 backgroundColor: indicadores.map(i => getColor(i))
@@ -939,11 +955,14 @@ document.addEventListener('DOMContentLoaded', () => {
             maintainAspectRatio: false,
             animation: false,
             scales: {
-                x: { ticks: { maxRotation: 45, minRotation: 45, font: { size: 16, weight: 'bold' } } }
+                x: { ticks: { maxRotation: 45, minRotation: 45, autoSkip: false, callback: (value) => dividirNombre(indicadores[value]?.nombre || ''), font: { size: 16, weight: 'bold' } } }
             },
             plugins: {
                 legend: { display: false },
-                datalabels: baseDataLabels
+                datalabels: {
+                    ...baseDataLabels,
+                    formatter: (value, context) => formatearValorUnidad(value, indicadores[context.dataIndex]?.unidad)
+                }
             }
         }
     });
@@ -1017,11 +1036,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return suma / lista.length;
     }
 
+    function unidadPredominante(lista) {
+        const unidades = [...new Set(lista.map(i => i.unidad ? i.unidad : ''))];
+        return unidades.length === 1 ? unidades[0] : '';
+    }
+
     const promedioIndicadores = calcularPromedio(indicadores);
     const promedioNormas = calcularPromedio(normas);
     const promedioEncuestas = calcularPromedio(encuestas);
 
-    document.getElementById('promIndicadores').innerText = promedioIndicadores.toFixed(2) + '%';
+    document.getElementById('promIndicadores').innerText = formatearValorUnidad(promedioIndicadores, unidadPredominante(indicadores));
     document.getElementById('promNormas').innerText = promedioNormas.toFixed(2) + '%';
     document.getElementById('promEncuestas').innerText = promedioEncuestas.toFixed(2) + '%';
     });

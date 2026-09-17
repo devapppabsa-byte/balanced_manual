@@ -180,22 +180,7 @@
 
         const rawData = @json($cumplimiento[$departamento->id]);
 
-    const labels = rawData.map(i => {
-
-        let [year, month] = i.mes.split("-"); // separa YYYY-MM
-
-        month = parseInt(month) - 1;
-
-        if (month < 1) {
-            month = 12;
-            year = parseInt(year) - 1;
-        }
-
-        // volver a formato YYYY-MM
-        const nuevoMes = year + "-" + String(month).padStart(2, "0");
-
-        return mesEnEspanol(nuevoMes);
-    });
+    const labels = rawData.map(i => mesEnEspanol(i.mes));
 
         
         const values = rawData.map(i => i.cumplimiento_total);

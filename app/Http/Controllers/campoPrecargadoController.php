@@ -126,6 +126,13 @@ class campoPrecargadoController extends Controller
             
         ]);
 
+        $autor = 'Id: '.auth()->guard('admin')->user()->id.' - '.auth()->guard('admin')->user()->nombre .' - '. auth()->guard('admin')->user()->puesto;
+        LogBalanced::create([
+            'autor' => $autor,
+            'accion' => "add",
+            'descripcion' => "Se agregó el campo precargado: ".$request->nombre_precargado." (id_input: ".$id_input.")",
+            'ip' => request()->ip()
+        ]);
 
     }
 

@@ -27,6 +27,12 @@ class encuestaController extends Controller
         $preguntas = Pregunta::with('respuestas')->where('id_encuesta', $encuesta->id)->get();
 
 
+        //Trae las contestaciones de la encuesta (una fila por contestación, incluso si el cliente respondió varias veces)
+        $contestaciones = ClienteEncuesta::with('cliente')
+            ->where('id_encuesta', $encuesta->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         //me ayuda a agregar los clientes que ya respondieron las preguntas
         $cliente_arr = [];
         foreach($existe as $cliente ){
@@ -38,26 +44,41 @@ class encuestaController extends Controller
 
 
 
-        //DATOS PARA LA GRAFICA DE LA ENCUESTA
+        //DATOS PARA LA GRAFICA DE LA ENCUESTA (una entrada por contestación)
         $resultados = Respuesta::join('preguntas', 'respuestas.id_pregunta', '=', 'preguntas.id')
                 ->join('clientes', 'respuestas.id_cliente', '=', 'clientes.id')
                 ->where('preguntas.id_encuesta', $encuesta->id)
                 ->where('preguntas.cuantificable', 1)
-                ->groupBy('clientes.id', 'clientes.nombre')
+                ->groupBy('clientes.id', 'clientes.nombre', 'respuestas.created_at')
                 ->select(
                     'clientes.nombre as cliente',
+                    DB::raw('respuestas.created_at as momento'),
                     DB::raw('AVG(respuestas.respuesta) as puntuacion')
                 )
+                ->orderBy('respuestas.created_at', 'desc')
                 ->get();
 
-            $labels  = $resultados->pluck('cliente');
+            $labels  = $resultados->map(fn($r) => $r->cliente . ' (' . Carbon::parse($r->momento)->translatedFormat('d/m/y') . ')');
             $valores = $resultados->pluck('puntuacion')->map(fn($v) => round($v, 2));
         //DATOS PARA LA HGRAFICA DE LA ENCUESTA
-                
+
+
+        //DATOS DE LA GRAFICA SEPARADOS POR SEMESTRE (enero-junio / julio-diciembre)
+        $semestre1 = $resultados->filter(fn($r) => Carbon::parse($r->momento)->month <= 6);
+        $semestre2 = $resultados->filter(fn($r) => Carbon::parse($r->momento)->month >= 7);
+
+        $labels_s1  = $semestre1->map(fn($r) => $r->cliente . ' (' . Carbon::parse($r->momento)->translatedFormat('d/m/y') . ')')->values();
+        $valores_s1 = $semestre1->pluck('puntuacion')->map(fn($v) => round($v, 2))->values();
+        $total_s1   = $semestre1->count();
+
+        $labels_s2  = $semestre2->map(fn($r) => $r->cliente . ' (' . Carbon::parse($r->momento)->translatedFormat('d/m/y') . ')')->values();
+        $valores_s2 = $semestre2->pluck('puntuacion')->map(fn($v) => round($v, 2))->values();
+        $total_s2   = $semestre2->count();
 
 
 
-        return view('admin.gestionar_preguntas', compact('encuesta', 'preguntas', 'existe', 'clientes', 'labels', 'valores'));
+
+        return view('admin.gestionar_preguntas', compact('encuesta', 'preguntas', 'existe', 'clientes', 'contestaciones', 'labels', 'valores', 'labels_s1', 'valores_s1', 'total_s1', 'labels_s2', 'valores_s2', 'total_s2'));
 
     }
 

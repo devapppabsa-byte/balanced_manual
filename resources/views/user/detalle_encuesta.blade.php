@@ -1,5 +1,8 @@
 @extends('plantilla')
 @section('title', 'Detalle encuesta')
+@php
+    use Carbon\Carbon;
+@endphp
 @section('contenido')
 
 
@@ -414,7 +417,7 @@
                             </h5>
                         </div>
                         <div class="card-body p-0">
-                            @if (!$clientes->isEmpty())
+                            @if (!$contestaciones->isEmpty())
                                 <div class="table-responsive">
                                     <table class="table table-hover align-middle mb-0">
                                         <thead class="table-light border-bottom">
@@ -425,13 +428,16 @@
                                                 <th style="min-width: 120px;">
                                                     <small class="text-muted fw-semibold text-uppercase">Línea</small>
                                                 </th>
+                                                <th style="min-width: 120px;">
+                                                    <small class="text-muted fw-semibold text-uppercase">Fecha</small>
+                                                </th>
                                                 <th class="text-center pe-4" style="width: 140px;">
                                                     <small class="text-muted fw-semibold text-uppercase">Acción</small>
                                                 </th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach ($clientes as $cliente)
+                                            @foreach ($contestaciones as $c)
                                                 <tr class="border-bottom">
                                                     <td class="ps-4">
                                                         <div class="d-flex align-items-center">
@@ -442,22 +448,27 @@
                                                             </div>
                                                             <div class="flex-grow-1">
                                                                 <small class="fw-semibold text-dark d-block">
-                                                                    {{$cliente->nombre}}
+                                                                    {{ $c->cliente->nombre ?? 'Sin cliente' }}
                                                                 </small>
                                                             </div>
                                                         </div>
                                                     </td>
                                                     <td>
                                                         <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25">
-                                                            {{$cliente->linea}}
+                                                            {{ $c->cliente->linea ?? '—' }}
                                                         </span>
+                                                    </td>
+                                                    <td>
+                                                        <small class="text-muted">
+                                                            {{ Carbon::parse($c->created_at)->translatedFormat('d/m/Y') }}
+                                                        </small>
                                                     </td>
                                                     
                                                     <td class="text-center pe-4">
                                                         <a class="btn btn-sm btn-outline-primary" 
-                                                           href="{{route('show.respuestas.usuario', ['cliente' => $cliente->id, 'encuesta' => $encuesta->id])}}"
+                                                           href="{{route('show.respuestas.usuario', ['cliente' => $c->id_cliente, 'encuesta' => $encuesta->id, 'contestacion' => $c->id])}}"
                                                            data-mdb-tooltip-init 
-                                                           title="Ver respuestas de {{$cliente->nombre}}">
+                                                           title="Ver respuestas de {{ $c->cliente->nombre ?? 'cliente' }} del {{ Carbon::parse($c->created_at)->translatedFormat('d/m/Y') }}">
                                                             <i class="fa-solid fa-eye me-1"></i>
                                                             Ver
                                                         </a>
@@ -633,7 +644,7 @@
 
 
 <div class="modal fade" id="grafico" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-mdb-backdrop="static">
-  <div class="modal-dialog modal-xl modal-fullscreen-sm-down">
+  <div class="modal-dialog modal-fullscreen">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
         <h5 class="modal-title" id="exampleModalLabel">Gráfica</h5>
@@ -641,42 +652,107 @@
       </div>
         <div class="modal-body">
             <div class="col-12" >
-                <!-- Tabs navs -->
-                <ul class="nav nav-tabs nav-justified mb-3" id="ex1" role="tablist">
+                <!-- Tabs de semestre -->
+                <ul class="nav nav-pills nav-justified mb-3" id="semestresTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <a data-mdb-tab-init class="nav-link fw-bold h-4 text-dark active" id="ex3-tab-1" href="#ex3-tabs-1" role="tab" aria-controls="ex3-tabs-1" aria-selected="true">
-                            <i class="fa-solid fa-chart-simple"></i>
-                            Grafico de Barras
+                        <a data-mdb-tab-init class="nav-link fw-bold active" id="sem1-tab" href="#sem1-pane" role="tab" aria-controls="sem1-pane" aria-selected="true">
+                            <i class="fa-solid fa-calendar me-2"></i>
+                            Enero - Junio
                         </a>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <a data-mdb-tab-init class="nav-link fw-bold h-4 text-dark" id="ex3-tab-2" href="#ex3-tabs-2" role="tab" aria-controls="ex3-tabs-2" aria-selected="false">
-                            <i class="fa fa-chart-line"></i>
-                            Grafico de Linea
-                        </a>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <a data-mdb-tab-init class="nav-link fw-bold h-4 text-dark" id="ex3-tab-3" href="#ex3-tabs-3" role="tab" aria-controls="ex3-tabs-3" aria-selected="false">
-                            <i class="fa fa-circle"></i>
-                            Grafico de Pie
+                        <a data-mdb-tab-init class="nav-link fw-bold" id="sem2-tab" href="#sem2-pane" role="tab" aria-controls="sem2-pane" aria-selected="false">
+                            <i class="fa-solid fa-calendar me-2"></i>
+                            Julio - Diciembre
                         </a>
                     </li>
                 </ul>
-                <!-- Tabs navs -->
+                <!-- Tabs de semestre -->
 
-                <!-- Tabs content -->
-                <div class="tab-content" id="ex2-content">
-                    <div class="tab-pane  show active" id="ex3-tabs-1" role="tabpanel" aria-labelledby="ex3-tab-1" >
-                        <canvas id="chartBarras"></canvas>
+                <!-- Tabs content de semestre -->
+                <div class="tab-content" id="semestresContent">
+                    <div class="tab-pane fade show active" id="sem1-pane" role="tabpanel" aria-labelledby="sem1-tab">
+                        @if($total_s1 > 0)
+                        <ul class="nav nav-tabs nav-justified mb-3" id="ex1-s1" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <a data-mdb-tab-init class="nav-link fw-bold h-4 text-dark active" id="ex3-tab-1-s1" href="#ex3-tabs-1-s1" role="tab" aria-controls="ex3-tabs-1-s1" aria-selected="true">
+                                    <i class="fa-solid fa-chart-simple"></i>
+                                    Grafico de Barras
+                                </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a data-mdb-tab-init class="nav-link fw-bold h-4 text-dark" id="ex3-tab-2-s1" href="#ex3-tabs-2-s1" role="tab" aria-controls="ex3-tabs-2-s1" aria-selected="false">
+                                    <i class="fa fa-chart-line"></i>
+                                    Grafico de Linea
+                                </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a data-mdb-tab-init class="nav-link fw-bold h-4 text-dark" id="ex3-tab-3-s1" href="#ex3-tabs-3-s1" role="tab" aria-controls="ex3-tabs-3-s1" aria-selected="false">
+                                    <i class="fa fa-circle"></i>
+                                    Grafico de Pie
+                                </a>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="ex2-content-s1">
+                            <div class="tab-pane show active" id="ex3-tabs-1-s1" role="tabpanel" aria-labelledby="ex3-tab-1-s1">
+                                <canvas id="chartBarrasS1"></canvas>
+                            </div>
+                            <div class="tab-pane p-5" id="ex3-tabs-2-s1" role="tabpanel" aria-labelledby="ex3-tab-2-s1">
+                                <canvas id="chartLineaS1"></canvas>
+                            </div>
+                            <div class="tab-pane" id="ex3-tabs-3-s1" role="tabpanel" aria-labelledby="ex3-tab-3-s1">
+                                <canvas id="chartPieS1"></canvas>
+                            </div>
+                        </div>
+                        @else
+                            <div class="text-center p-5">
+                                <i class="fa-solid fa-circle-info fa-3x text-muted mb-3"></i>
+                                <p class="text-muted fs-5">Sin contestaciones en este semestre.</p>
+                            </div>
+                        @endif
                     </div>
-                    <div class="tab-pane  p-5" id="ex3-tabs-2" role="tabpanel" aria-labelledby="ex3-tab-2">
-                        <canvas id="chartLinea"></canvas>
-                    </div>
-                    <div class="tab-pane " id="ex3-tabs-3" role="tabpanel" aria-labelledby="ex3-tab-3">
-                        <canvas id="chartPie"></canvas>
+                    <div class="tab-pane fade" id="sem2-pane" role="tabpanel" aria-labelledby="sem2-tab">
+                        @if($total_s2 > 0)
+                        <ul class="nav nav-tabs nav-justified mb-3" id="ex1-s2" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <a data-mdb-tab-init class="nav-link fw-bold h-4 text-dark active" id="ex3-tab-1-s2" href="#ex3-tabs-1-s2" role="tab" aria-controls="ex3-tabs-1-s2" aria-selected="true">
+                                    <i class="fa-solid fa-chart-simple"></i>
+                                    Grafico de Barras
+                                </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a data-mdb-tab-init class="nav-link fw-bold h-4 text-dark" id="ex3-tab-2-s2" href="#ex3-tabs-2-s2" role="tab" aria-controls="ex3-tabs-2-s2" aria-selected="false">
+                                    <i class="fa fa-chart-line"></i>
+                                    Grafico de Linea
+                                </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a data-mdb-tab-init class="nav-link fw-bold h-4 text-dark" id="ex3-tab-3-s2" href="#ex3-tabs-3-s2" role="tab" aria-controls="ex3-tabs-3-s2" aria-selected="false">
+                                    <i class="fa fa-circle"></i>
+                                    Grafico de Pie
+                                </a>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="ex2-content-s2">
+                            <div class="tab-pane show active" id="ex3-tabs-1-s2" role="tabpanel" aria-labelledby="ex3-tab-1-s2">
+                                <canvas id="chartBarrasS2"></canvas>
+                            </div>
+                            <div class="tab-pane p-5" id="ex3-tabs-2-s2" role="tabpanel" aria-labelledby="ex3-tab-2-s2">
+                                <canvas id="chartLineaS2"></canvas>
+                            </div>
+                            <div class="tab-pane" id="ex3-tabs-3-s2" role="tabpanel" aria-labelledby="ex3-tab-3-s2">
+                                <canvas id="chartPieS2"></canvas>
+                            </div>
+                        </div>
+                        @else
+                            <div class="text-center p-5">
+                                <i class="fa-solid fa-circle-info fa-3x text-muted mb-3"></i>
+                                <p class="text-muted fs-5">Sin contestaciones en este semestre.</p>
+                            </div>
+                        @endif
                     </div>
                 </div>
-                <!-- Tabs content -->
+                <!-- Tabs content de semestre -->
 
             </div>
         </div>
@@ -689,9 +765,9 @@
 
 
 
-{{--Aqui van a estar los ciclos que me generalk los modales--}}
+<!-- Aqui van a estar los ciclos que me generan los modales -->
 
-{{-- @forelse ($preguntas as $pregunta)
+@forelse ($preguntas as $pregunta)
 
     <div class="modal fade" id="elim{{$pregunta->id}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-mdb-backdrop="static">
         <div class="modal-dialog modal-lg">
@@ -711,18 +787,17 @@
 
             </div>
         </div>
-    </div>   --}}
+    </div>
     
-    {{-- @empty
+    @empty
     
-    @endforelse  --}}
+    @endforelse
 
 
 
 
 
 
-{{-- 
 <div class="modal fade" id="agregar_pregunta" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-mdb-backdrop="static">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -769,7 +844,7 @@
       </div>
     </div>
   </div>
-</div> --}}
+</div>
 
 
 
@@ -794,18 +869,42 @@
 @section('scripts')
 
 <script>
-const etiquetas = @json($labels);
-const valores   = @json($valores);
-
 const minimo = 5;
 
-const colores = valores.map(v =>
-    v < minimo ? '#e74c3c' : '#2ecc71'
-);
+const datosSemestres = [
+    {
+        etiquetas: @json($labels_s1),
+        valores: @json($valores_s1),
+        sufijo: 'S1'
+    },
+    {
+        etiquetas: @json($labels_s2),
+        valores: @json($valores_s2),
+        sufijo: 'S2'
+    }
+];
 
-const ctx = document.getElementById('chartBarras').getContext('2d');
+const chartsInstances = {};
 
-new Chart(ctx, {
+function destruirSiExiste(canvasId) {
+    if (chartsInstances[canvasId]) {
+        chartsInstances[canvasId].destroy();
+        delete chartsInstances[canvasId];
+    }
+}
+
+function crearBarrasSemestre(etiquetas, valores, sufijo) {
+    const canvas = document.getElementById('chartBarras' + sufijo);
+    if (!canvas) return;
+
+    const canvasId = 'chartBarras' + sufijo;
+    destruirSiExiste(canvasId);
+
+    const colores = valores.map(v =>
+        v < minimo ? '#e74c3c' : '#2ecc71'
+    );
+
+    chartsInstances[canvasId] = new Chart(canvas.getContext('2d'), {
     type: 'bar',
     data: {
         labels: etiquetas,
@@ -835,78 +934,68 @@ new Chart(ctx, {
             }
         }
     }
-});
-</script>
+    });
+}
 
+function crearLineaSemestre(etiquetas, valores, sufijo) {
+    const canvas = document.getElementById('chartLinea' + sufijo);
+    if (!canvas) return;
 
+    const canvasId = 'chartLinea' + sufijo;
+    destruirSiExiste(canvasId);
 
+    const valoresPorcentaje = valores.map(v => v * 10);
 
+    const coloresPuntos = valoresPorcentaje.map(v =>
+        v < minimo * 10 ? '#e74c3c' : '#2ecc71'
+    );
 
-
-
-
-
-
-
-
-
-<script>
-
-const valoresPorcentaje = valores.map(v => v * 10);
-
-const coloresPuntos = valoresPorcentaje.map(v =>
-    v < minimo * 10 ? '#e74c3c' : '#2ecc71'
-);
-
-const ctxlinea = document.getElementById('chartLinea').getContext('2d');
-
-new Chart(ctxlinea, {
-    type: 'line',
-    data: {
-        labels: etiquetas,
-        datasets: [{
-            label: 'Puntuación promedio por cliente (%)',
-            data: valoresPorcentaje,
-            borderColor: '#2980b9',
-            backgroundColor: 'rgba(52, 152, 219, 0.15)',
-            fill: true,
-            tension: 0.3,
-            pointBackgroundColor: coloresPuntos,
-            pointBorderColor: '#2c3e50',
-            pointRadius: 6,
-            pointHoverRadius: 8
-        }]
-    },
-    options: {
-        responsive: true,
-        scales: {
-            y: {
-                beginAtZero: true,
-                max: 100,
-                ticks: {
-                    callback: value => value + '%'
+    chartsInstances[canvasId] = new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: etiquetas,
+            datasets: [{
+                label: 'Puntuación promedio por cliente (%)',
+                data: valoresPorcentaje,
+                borderColor: '#2980b9',
+                backgroundColor: 'rgba(52, 152, 219, 0.15)',
+                fill: true,
+                tension: 0.3,
+                pointBackgroundColor: coloresPuntos,
+                pointBorderColor: '#2c3e50',
+                pointRadius: 6,
+                pointHoverRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: value => value + '%'
+                    }
                 }
             }
         }
-    }
-});
-
-
-</script>
-
-<script>
-    // Colores automáticos (uno por cliente)
-    const coloresPie = etiquetas.map((_, i) => {
-        const paleta = [
-            '#3498db', '#2ecc71', '#e74c3c', '#f1c40f',
-            '#9b59b6', '#1abc9c', '#e67e22', '#34495e'
-        ];
-        return paleta[i % paleta.length];
     });
+}
 
-    const ctxPie = document.getElementById('chartPie').getContext('2d');
+function crearPieSemestre(etiquetas, valores, sufijo) {
+    const canvas = document.getElementById('chartPie' + sufijo);
+    if (!canvas) return;
 
-    new Chart(ctxPie, {
+    const canvasId = 'chartPie' + sufijo;
+    destruirSiExiste(canvasId);
+
+    const paleta = [
+        '#3498db', '#2ecc71', '#e74c3c', '#f1c40f',
+        '#9b59b6', '#1abc9c', '#e67e22', '#34495e'
+    ];
+    const coloresPie = etiquetas.map((_, i) => paleta[i % paleta.length]);
+
+    chartsInstances[canvasId] = new Chart(canvas.getContext('2d'), {
         type: 'pie',
         data: {
             labels: etiquetas,
@@ -938,13 +1027,31 @@ new Chart(ctxlinea, {
             }
         }
     });
+}
+
+function crearGrafica(etiquetas, valores, sufijo, tipo) {
+    if (tipo === 'Barras') crearBarrasSemestre(etiquetas, valores, sufijo);
+    else if (tipo === 'Linea') crearLineaSemestre(etiquetas, valores, sufijo);
+    else if (tipo === 'Pie') crearPieSemestre(etiquetas, valores, sufijo);
+}
+
+function renderizarGraficasVisibles() {
+    document.querySelectorAll('#grafico .tab-pane.show.active canvas[id^="chart"]').forEach(canvas => {
+        const sufijo = canvas.id.replace(/^chart(Barras|Linea|Pie)/, '');
+        const datos = datosSemestres.find(d => d.sufijo === sufijo);
+        if (!datos) return;
+        const tipo = canvas.id.match(/^chart(Barras|Linea|Pie)/)[1];
+        crearGrafica(datos.etiquetas, datos.valores, sufijo, tipo);
+    });
+}
+
+document.addEventListener('shown.bs.modal', e => {
+    if (e.target && e.target.id === 'grafico') renderizarGraficasVisibles();
+});
+
+document.addEventListener('shown.bs.tab', () => {
+    renderizarGraficasVisibles();
+});
 </script>
-
-
- 
-
-
-
-
 
 @endsection

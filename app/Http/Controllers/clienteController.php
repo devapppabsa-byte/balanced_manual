@@ -93,6 +93,13 @@ class clienteController extends Controller
         }
 
         else{
+            LogBalanced::create([
+                'autor' => 'Guest',
+                'accion' => "failed_login",
+                'descripcion' => "Intento de inicio de sesión fallido para el cliente: ".$request->email,
+                'ip' => $request->ip()
+            ]);
+
             return back()->with('error', 'Las credenciales no coinciden con los registros');
         }
 
@@ -250,21 +257,27 @@ public function contestando_encuesta_user(Request $request, Encuesta $encuesta )
 
 
 
-public function show_respuestas(Cliente $cliente, Encuesta $encuesta){
+public function show_respuestas(Cliente $cliente, Encuesta $encuesta, ClienteEncuesta $contestacion = null){
 
         $clienteId = $cliente->id;
         $encuestaId = $encuesta->id;
 
+        //si se recibe una contestación específica, se filtran solo sus respuestas
+        $respuestasQuery = function ($q) use ($clienteId, $contestacion) {
+            $q->where('id_cliente', $clienteId);
+            if ($contestacion) {
+                $q->where('created_at', $contestacion->created_at);
+            }
+        };
 
-        $preguntas = Pregunta::with(['respuestas' => function ($q) use ($clienteId) {
-                $q->where('id_cliente', $clienteId);
-            }])
+        $preguntas = Pregunta::with(['respuestas' => $respuestasQuery])
             ->where('id_encuesta', $encuestaId)
             ->get();
 
 
         //se necesitan las respuestas de las encuestas, es decir, consultar las preguntas con su respuesta, todo estom vendra de la tabla auxiliar.
-        return view("admin.respuestas_cliente_encuestas", compact('preguntas', 'cliente'));
+        $fecha_contestacion = $contestacion ? \Carbon\Carbon::parse($contestacion->created_at)->translatedFormat('d/m/Y') : null;
+        return view("admin.respuestas_cliente_encuestas", compact('preguntas', 'cliente', 'fecha_contestacion'));
     
 }
 

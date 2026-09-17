@@ -13,6 +13,7 @@ use App\Models\CumplimientoNorma;
 use App\Models\CampoInvolucrado;
 use App\Models\CampoPrecargado;
 use App\Models\CampoVacio;
+use App\Models\Configuracion;
 use App\Models\InformacionInputVacio;
 use App\Models\InformacionForanea;
 use App\Models\InformacionInputPrecargado;
@@ -561,11 +562,13 @@ public function show_indicador_robusto_user(Request $request, Indicador $indicad
    $campos_graficar = IndicadorLleno::where('id_indicador', $indicador->id)->distinct()->pluck('nombre_campo');
   
 
-   $inicio = request()->filled('fecha_inicio')
+    $inicio = request()->filled('fecha_inicio')
         ? Carbon::parse(request('fecha_inicio'), config('app.timezone'))
             ->startOfDay()
             ->utc()
-        : "2025-01-01T06:00:00.000000Z";
+        : Carbon::now(config('app.timezone'))
+            ->startOfYear()
+            ->utc();
 
 
 
@@ -876,7 +879,11 @@ else{
      $ultimo_mes = IndicadorLleno::where('id_indicador', $indicador->id)->where('fecha_periodo', $request->mostrar_mes)->where('final', 'on')->first();   
  }
  else{
-     $ultimo_mes = IndicadorLleno::where('id_indicador', $indicador->id)->where('final', 'on')->latest()->first();
+     $ultimo_mes = IndicadorLleno::where('id_indicador', $indicador->id)
+        ->where('final', 'on')
+        ->orderBy('fecha_periodo', 'desc')
+        ->orderBy('id', 'desc')
+        ->first();
     
  }
 
@@ -919,12 +926,12 @@ else{
 
 
 //variuables para el llenado y borrado de los indicadores
+$bloqueo_llenado = Configuracion::valor('bloqueo_llenado_indicadores', '0');
 
 
 
 
-
-    return view('user.indicador_robusto', compact('indicador', 'info_meses', 'promedios', 'graficar', 'historico', 'resultado', 'mejor_mes', 'peor_mes', 'campos_graficar', 'campo_graficar','datos_campo_graficar', 'ultimo_mes', 'fechas_seleccionar', 'campos_llenos','campos_vacios', 'ultima_carga_excel', 'ultima_carga_indicador' ));
+    return view('user.indicador_robusto', compact('indicador', 'info_meses', 'promedios', 'graficar', 'historico', 'resultado', 'mejor_mes', 'peor_mes', 'campos_graficar', 'campo_graficar','datos_campo_graficar', 'ultimo_mes', 'fechas_seleccionar', 'campos_llenos','campos_vacios', 'ultima_carga_excel', 'ultima_carga_indicador', 'bloqueo_llenado' ));
 
 }
 
@@ -1054,9 +1061,10 @@ public function show_indicador_user(Request $request,  Indicador $indicador){
 
     //Para mostrar los datos del indicador
     $info_meses = IndicadorLleno::where('id_indicador', $indicador->id)->where('final', 'on')->whereBetween('fecha_periodo', [$inicio, $fin])->orderBy('fecha_periodo', 'desc')->get();
-        
 
-    return view('user.indicador', compact('indicador', 'campos_calculados', 'campos_llenos', 'campos_unidos', 'campo_resultado_final', 'campos_vacios', 'grupos', 'graficar', 'meta_minima_general', 'meta_maxima_general', 'tipo_indicador', 'ultima_carga_excel', 'ultima_carga_indicador', 'promedios', 'info_meses'));
+    $bloqueo_llenado = Configuracion::valor('bloqueo_llenado_indicadores', '0');
+
+    return view('user.indicador', compact('indicador', 'campos_calculados', 'campos_llenos', 'campos_unidos', 'campo_resultado_final', 'campos_vacios', 'grupos', 'graficar', 'meta_minima_general', 'meta_maxima_general', 'tipo_indicador', 'ultima_carga_excel', 'ultima_carga_indicador', 'promedios', 'info_meses', 'bloqueo_llenado'));
 
     
 }//cierra el metodo de show_indicador_user
@@ -1563,20 +1571,19 @@ public function input_promedio_guardar(Request $request, Indicador $indicador){
 public function lista_indicadores_admin(Departamento $departamento){
 
 
-
-    //manda la fechas a el select que esta en la viues lista_indicadores
-    $fechas_seleccionar = IndicadorLleno::where('final', 'on')
-        ->selectRaw("DATE_FORMAT(fecha_periodo, '%Y-%m') as periodo")
-        ->distinct()
-        ->orderBy('periodo')
-        ->pluck('periodo');
-
+//manda la fechas a el select que esta en la viues lista_indicadores
+$fechas_seleccionar = IndicadorLleno::where('final', 'on')
+    ->selectRaw("DATE_FORMAT(fecha_periodo, '%Y-%m') as periodo")
+    ->distinct()
+    ->orderBy('periodo')
+    ->pluck('periodo');
 
 
 
-    //FINALIZA PRUEBAS  PARA LO DE LAS GRAFICAS
-    $indicadores = Indicador::with('indicadorLleno')->where('id_departamento', $departamento->id)->get();
-    //Este codigo es para sacar el cumplimiento normativo
+
+//FINALIZA PRUEBAS  PARA LO DE LAS GRAFICAS
+$indicadores = Indicador::with('indicadorLleno')->where('id_departamento', $departamento->id)->get();
+//Este codigo es para sacar el cumplimiento normativo
 
 
 
@@ -1657,9 +1664,6 @@ $normas = DB::table('apartado_norma as an')
     ->get();
 
 //CODIGO QUE ME AYUDA A MOSTRAR EL CUMPLIMIENTO DE LAS ENCUESTAS
-
-
-
 
 
  return view('admin.lista_indicadores', compact('indicadores', 'departamento', 'encuestas', 'normas', 'fechas_seleccionar'));
@@ -1757,30 +1761,26 @@ public function indicador_lleno_show_admin(Indicador $indicador){
 }
 
 
-
-
-
-
-
-
-
-
-
-
 //aui empieza el codigo para el llenado de indicadores
 public function llenado_informacion_indicadores(Indicador $indicador, Request $request){
 
 
     
     //fechas usadas para el llenado de indicadores del año ´pasado:
-   //$fecha_periodo = Carbon::now()->subMonth();
-    $fecha_periodo = Carbon::parse($request->fecha_periodo);
-    $created_at = Carbon::parse($request->fecha_periodo)->addMonth();
+    $fecha_periodo =  Carbon::now()->subMonth();
+    $created_at = $fecha_periodo;
+
+
+    $bloqueo_llenado = Configuracion::valor('bloqueo_llenado_indicadores', '0');
+
+    if ($bloqueo_llenado === '1') {
+        return back()->withErrors(['bloqueo_llenado' => 'El llenado de indicadores está bloqueado por el admin.']);
+    }
 
 
     $nombre_usuario = auth()->user()->name;
-    $year = Carbon::now()->year;
-    $mes = Carbon::now()->subMonth()->translatedFormat('F');
+    $year = $fecha_periodo->year;
+    $mes = $fecha_periodo->translatedFormat('F');
 
     //esta es la fechsa periodo que se debe usar en el llenado original de los indicadores.
     $fecha_periodo_original = $fecha_periodo;
@@ -1794,10 +1794,11 @@ public function llenado_informacion_indicadores(Indicador $indicador, Request $r
 
         $request->validate([
 
-            "informacion_indicador" => "required",
+"informacion_indicador" => "required",
             "id_input" => "required",
             "id_input_vacio" => "required",
-            "tipo_input" => "required"
+            "tipo_input" => "required",
+
         
         ]);
 
@@ -1819,6 +1820,7 @@ public function llenado_informacion_indicadores(Indicador $indicador, Request $r
                 "year" => $year
 
             ]);
+
 
             //creo que es aqui, es u for que de acuerdo al numero de campos vacios 
             // 
@@ -2253,6 +2255,14 @@ foreach($inputs_precargados as $index_precargados => $precargado){
             ]);
         }
 
+        $autor = 'Id: '.auth()->guard('admin')->user()->id.' - '.auth()->guard('admin')->user()->nombre .' - '. auth()->guard('admin')->user()->puesto;
+        LogBalanced::create([
+            'autor' => $autor,
+            'accion' => "add",
+            'descripcion' => "Se vincularon ".count($nuevos)." indicadores cruzados al indicador: ".$indicador->nombre." (id: ".$indicador->id.")",
+            'ip' => request()->ip()
+        ]);
+
         return redirect()->back()
             ->with('success', 'Indicadores cruzados agregados correctamente.');
     }
@@ -2273,6 +2283,14 @@ foreach($inputs_precargados as $index_precargados => $precargado){
         }
 
         $cruzado->delete();
+
+        $autor = 'Id: '.auth()->guard('admin')->user()->id.' - '.auth()->guard('admin')->user()->nombre .' - '. auth()->guard('admin')->user()->puesto;
+        LogBalanced::create([
+            'autor' => $autor,
+            'accion' => "deleted",
+            'descripcion' => "Se desvinculó el indicador cruzado id: ".$request->id_cruzado." del indicador: ".$indicador->nombre." (id: ".$indicador->id.")",
+            'ip' => request()->ip()
+        ]);
 
         return redirect()->back()
             ->with('success', 'Indicador desvinculado correctamente.');
@@ -2389,16 +2407,24 @@ foreach($inputs_precargados as $index_precargados => $precargado){
 
         $messages = array_slice($messages, -40);
 
+        $autor = 'Id: '.auth()->guard('admin')->user()->id.' - '.auth()->guard('admin')->user()->nombre .' - '. auth()->guard('admin')->user()->puesto;
+        LogBalanced::create([
+            'autor' => $autor,
+            'accion' => "ai_analysis",
+            'descripcion' => "Se ejecutó un análisis con IA para el indicador: ".$indicador->nombre." (id: ".$indicador->id.") - chat_id: ".$chatId,
+            'ip' => request()->ip()
+        ]);
+
         try {
             $response = Http::withOptions(['stream' => true])->timeout(200)->withHeaders([
-                'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
+                'Authorization' => 'Bearer ' . config('services.openrouter.key'),
                 'Content-Type' => 'application/json',
                 'HTTP-Referer' => config('app.url'),
                 'X-Title' => 'Laravel Chat',
             ])
             ->asJson()
             ->post('https://openrouter.ai/api/v1/chat/completions', [
-                'model' => env('OPENROUTER_MODEL', 'openai/gpt-oss-120b:free'),
+                'model' => config('services.openrouter.model'),
                 'messages' => $messages,
                 'max_tokens' => 2500,
                 'stream' => true,
@@ -2536,6 +2562,336 @@ foreach($inputs_precargados as $index_precargados => $precargado){
             ->where('chat_id', $chatId)
             ->delete();
 
+        $autor = 'Id: '.auth()->guard('admin')->user()->id.' - '.auth()->guard('admin')->user()->nombre .' - '. auth()->guard('admin')->user()->puesto;
+        LogBalanced::create([
+            'autor' => $autor,
+            'accion' => "deleted",
+            'descripcion' => "Se eliminó el chat de IA (id: ".$chatId.") del indicador: ".$indicador->nombre." (id: ".$indicador->id.")",
+            'ip' => request()->ip()
+        ]);
+
+        return response()->json(['ok' => true]);
+    }
+
+    // ============================================================
+    // CHAT IA LADO USUARIO (restringido a propios + foráneos del depto)
+    // ============================================================
+
+    public function analizar_cruzados_vista_usuario(Indicador $indicador)
+    {
+        $userDepto = Auth::user()->id_departamento;
+
+        $asociados = Indicador::with('departamento')
+            ->where('id', '!=', $indicador->id)
+            ->where(function ($q) use ($userDepto) {
+                $q->where('indicadores.id_departamento', $userDepto)
+                  ->orWhereHas('departamentosForaneos', function ($q2) use ($userDepto) {
+                      $q2->where('id_departamento', $userDepto);
+                  });
+            })
+            ->orderBy('nombre')
+            ->get();
+
+        return view('user.analizando_cruzados', compact('indicador', 'asociados'));
+    }
+
+    public function analizar_cruzados_ia_usuario(Request $request, Indicador $indicador)
+    {
+        $question = $request->input('question');
+        $fechaInicio = $request->input('fecha_inicio');
+        $fechaFin = $request->input('fecha_fin');
+        $usarRango = $fechaInicio && $fechaFin;
+
+        $userId = Auth::id();
+
+        if (!$question) {
+            $userDepto = Auth::user()->id_departamento;
+
+            $asociados = Indicador::with('departamento')
+                ->where('id', '!=', $indicador->id)
+                ->where(function ($q) use ($userDepto) {
+                    $q->where('indicadores.id_departamento', $userDepto)
+                      ->orWhereHas('departamentosForaneos', function ($q2) use ($userDepto) {
+                          $q2->where('id_departamento', $userDepto);
+                      });
+                })
+                ->orderBy('nombre')
+                ->get();
+
+            if ($asociados->isEmpty()) {
+                return response()->json(['error' => 'No hay indicadores asociados a tu departamento para analizar.'], 400);
+            }
+
+            $permitidos = $asociados->pluck('id')->all();
+
+            $seleccion = $request->input('indicadores', $permitidos);
+            $seleccion = array_intersect((array) $seleccion, $permitidos);
+
+            if (empty($seleccion)) {
+                return response()->json(['error' => 'Selecciona al menos un indicador asociado para analizar.'], 400);
+            }
+
+            $seleccionados = Indicador::whereIn('id', $seleccion)->orderBy('nombre')->get();
+
+            $datos_para_analisis = [];
+
+            $hijo = $indicador;
+            $registros_padre = $this->registrosIA($hijo->id, $hijo->nombre . ' (principal)', $hijo->meta_esperada, $hijo->tipo_indicador ?? 'normal', $fechaInicio, $fechaFin);
+
+            if (!empty($registros_padre['registros'])) {
+                $datos_para_analisis[] = $registros_padre;
+            }
+
+            foreach ($seleccionados as $hijo) {
+                $registros = $this->registrosIA($hijo->id, $hijo->nombre . ' (asociado)', $hijo->meta_esperada, $hijo->tipo_indicador ?? 'normal', $fechaInicio, $fechaFin);
+
+                if (!empty($registros['registros'])) {
+                    $datos_para_analisis[] = $registros;
+                }
+            }
+
+            if (empty($datos_para_analisis)) {
+                return response()->json(['error' => 'No hay datos registrados en los indicadores seleccionados.'], 400);
+            }
+
+            $payload = json_encode($datos_para_analisis, JSON_UNESCAPED_UNICODE);
+
+            $systemMessage = "Eres un analista de KPI experto. Tus respuestas deben ser en markdown con formato limpio. Usa encabezados, listas, tablas y negritas para mejor legibilidad no uses mucho espacio entre parrafos ni mucho interlineado. Incluye tablas markdown (formato | col1 | col2 |) para resúmenes, comparativas por mes/indicador y niveles de cumplimiento. Realiza un análisis EXTENDIDO, profundo y detallado. Para cada indicador recibes todos sus campos por periodo; la fila con 'es_resultado': true (campo marcado final='on') es el RESULTADO OFICIAL del KPI y es la que debes usar para evaluar el cumplimiento contra la 'meta_esperada', según el 'tipo' (normal = mayor es mejor; riesgo = menor es mejor). Los demás campos son contexto. Además de detectar problemas y desviaciones, debes SIEMPRE entregar sugerencias y PLANES DE ACCIÓN concretos para corregirlos, con acciones específicas, responsable sugerido y plazo, priorizados por impacto.";
+
+            $periodoTexto = $usarRango
+                ? "Periodo analizado: del {$fechaInicio} al {$fechaFin}."
+                : "Periodo analizado: últimos 10 registros por indicador.";
+            $userMessage = "Analiza de forma extendida estos datos de múltiples indicadores KPI asociados. {$periodoTexto}\nDatos:\n{$payload}\n\nDebes dar un análisis profundo que incluya:\n1. Resumen ejecutivo general de los indicadores asociados.\n2. Tendencias generales y estacionalidad mes a mes de cada indicador.\n3. Problemas identificados detallando indicador, periodo y magnitud del desvío.\n4. Nivel de cumplimiento de cada uno (porcentaje estimado, comparación con su meta si es detectable, y estado: cumplido/en riesgo/incumplido).\n5. Recomendaciones de mejora específicas, accionables y priorizadas por impacto.\n6. Correlación entre los indicadores: como se afectan entre sí, que relaciones causa-efecto se observan.\n7. Conclusiones globales integrando los resultados de cada KPI.\n8. Tabla final comparativa por mes de todos los indicadores.\n9. Plan de acción: por cada problema o desviación detectada, acciones de corrección concretas, responsable sugerido y plazo, priorizadas por impacto.\nUsa formato markdown y sé exhaustivo pero conciso en cada sección.";
+
+            $chatId = (ChatIaMensaje::where('id_indicador', $indicador->id)
+                ->where('id_user', $userId)
+                ->max('chat_id') ?? 0) + 1;
+
+            ChatIaMensaje::create([
+                'id_indicador' => $indicador->id,
+                'id_user' => $userId,
+                'chat_id' => $chatId,
+                'role' => 'system',
+                'content' => $systemMessage,
+            ]);
+            ChatIaMensaje::create([
+                'id_indicador' => $indicador->id,
+                'id_user' => $userId,
+                'chat_id' => $chatId,
+                'role' => 'user',
+                'content' => $userMessage,
+            ]);
+
+            $messages = [
+                ['role' => 'system', 'content' => $systemMessage],
+                ['role' => 'user', 'content' => $userMessage],
+            ];
+        } else {
+            $chatId = ChatIaMensaje::where('id_indicador', $indicador->id)
+                ->where('id_user', $userId)
+                ->max('chat_id');
+
+            if (!$chatId) {
+                return response()->json(['error' => 'La conversación ha expirado. Vuelve a presionar el botón de análisis.'], 400);
+            }
+
+            ChatIaMensaje::create([
+                'id_indicador' => $indicador->id,
+                'id_user' => $userId,
+                'chat_id' => $chatId,
+                'role' => 'user',
+                'content' => $question,
+            ]);
+
+            $systemFollowUp = "Eres un analista de KPI experto. El usuario hace una PREGUNTA DE SEGUIMIENTO sobre el análisis que ya entregaste. Responde ÚNICAMENTE a su pregunta, de forma concreta y en markdown. NO vuelvas a generar el análisis completo, ni el resumen ejecutivo, ni el plan de acción general, salvo que la pregunta lo pida explícitamente. Usa negritas, listas y tablas cuando aporten claridad.";
+
+            $messages = [
+                ['role' => 'system', 'content' => $systemFollowUp],
+            ];
+
+            $previos = ChatIaMensaje::where('id_indicador', $indicador->id)
+                ->where('id_user', $userId)
+                ->where('chat_id', $chatId)
+                ->where('role', 'assistant')
+                ->orderBy('id')
+                ->get(['content']);
+
+            foreach ($previos as $p) {
+                $messages[] = ['role' => 'assistant', 'content' => $p->content];
+            }
+
+            $messages[] = ['role' => 'user', 'content' => $question];
+        }
+
+        $messages = array_slice($messages, -40);
+
+        $autor = 'Id: '.Auth::id().' - '.Auth::user()->name.' - '.Auth::user()->puesto;
+        LogBalanced::create([
+            'autor' => $autor,
+            'accion' => "ai_analysis",
+            'descripcion' => "El usuario ejecutó un análisis con IA para el indicador: ".$indicador->nombre." (id: ".$indicador->id.") - chat_id: ".$chatId,
+            'ip' => request()->ip()
+        ]);
+
+        try {
+            $response = Http::withOptions(['stream' => true])->timeout(200)->withHeaders([
+                'Authorization' => 'Bearer ' . config('services.openrouter.key'),
+                'Content-Type' => 'application/json',
+                'HTTP-Referer' => config('app.url'),
+                'X-Title' => 'Laravel Chat',
+            ])
+            ->asJson()
+            ->post('https://openrouter.ai/api/v1/chat/completions', [
+                'model' => config('services.openrouter.model'),
+                'messages' => $messages,
+                'max_tokens' => 2500,
+                'stream' => true,
+            ]);
+
+            $status = $response->status();
+
+            if ($status !== 200) {
+                $errorMsg = $response->body();
+                \Illuminate\Support\Facades\Log::info('OpenRouter error - status: ' . $status . ' body: ' . $errorMsg);
+
+                return response()->json(['error' => 'La IA no pudo generar un análisis: ' . $errorMsg], 500);
+            }
+
+            return response()->stream(function () use ($response, $indicador, $chatId, $userId) {
+                @set_time_limit(0);
+                @ini_set('output_buffering', '0');
+
+                $body = $response->getBody();
+                $buffer = '';
+                $full = '';
+                $assistantId = null;
+
+                try {
+                    while (!$body->eof()) {
+                        $chunk = $body->read(1024);
+                        if ($chunk === '') {
+                            usleep(10000);
+                            continue;
+                        }
+
+                        $buffer .= $chunk;
+
+                        while (($pos = strpos($buffer, "\n")) !== false) {
+                            $line = trim(substr($buffer, 0, $pos));
+                            $buffer = substr($buffer, $pos + 1);
+
+                            if (!str_starts_with($line, 'data:')) {
+                                continue;
+                            }
+
+                            $data = trim(substr($line, 5));
+                            if ($data === '[DONE]') {
+                                break 2;
+                            }
+
+                            $json = json_decode($data, true);
+                            $delta = $json['choices'][0]['delta']['content'] ?? '';
+
+                            if ($delta === '') {
+                                continue;
+                            }
+
+                            $full .= $delta;
+                            echo $delta;
+                            if (ob_get_level() > 0) {
+                                ob_flush();
+                            }
+                            flush();
+
+                            if ($assistantId === null) {
+                                $assistantId = ChatIaMensaje::create([
+                                    'id_indicador' => $indicador->id,
+                                    'id_user' => $userId,
+                                    'chat_id' => $chatId,
+                                    'role' => 'assistant',
+                                    'content' => $full,
+                                ])->id;
+                            } else {
+                                ChatIaMensaje::where('id', $assistantId)->update(['content' => $full]);
+                            }
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::info('OpenRouter stream cortado - ' . $e->getMessage());
+                }
+
+                if ($assistantId !== null) {
+                    ChatIaMensaje::where('id', $assistantId)->update(['content' => $full]);
+                }
+            }, 200, [
+                'Content-Type' => 'text/plain; charset=UTF-8',
+                'Cache-Control' => 'no-cache',
+                'X-Accel-Buffering' => 'no',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error al conectar con la IA: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function chats_ia_lista_usuario(Indicador $indicador)
+    {
+        $mensajes = ChatIaMensaje::where('id_indicador', $indicador->id)
+            ->where('id_user', Auth::id())
+            ->orderBy('id', 'asc')
+            ->get(['chat_id', 'role', 'content', 'created_at'])
+            ->groupBy('chat_id');
+
+        $chats = $mensajes->map(function ($msgs, $chatId) {
+            $fecha = $msgs->first()->created_at;
+
+            $preview = 'Análisis';
+            $usuarios = $msgs->filter(fn($m) => $m->role === 'user')->values();
+            if ($usuarios->count() > 1) {
+                $preview = mb_strimwidth($usuarios->get(1)->content, 0, 80, '...');
+            } else {
+                $asistente = $msgs->first(fn($m) => $m->role === 'assistant');
+                if ($asistente) {
+                    $preview = mb_strimwidth($asistente->content, 0, 80, '...');
+                }
+            }
+
+            return [
+                'chat_id' => (int) $chatId,
+                'fecha' => $fecha ? $fecha->format('d M Y H:i') : null,
+                'total_mensajes' => $msgs->count(),
+                'preview' => $preview,
+            ];
+        })->values();
+
+        return response()->json(['chats' => $chats]);
+    }
+
+    public function chat_ia_mensajes_usuario(Indicador $indicador, $chatId)
+    {
+        $mensajes = ChatIaMensaje::where('id_indicador', $indicador->id)
+            ->where('id_user', Auth::id())
+            ->where('chat_id', $chatId)
+            ->orderBy('id', 'asc')
+            ->get(['role', 'content']);
+
+        return response()->json(['mensajes' => $mensajes]);
+    }
+
+    public function eliminar_chat_ia_usuario(Indicador $indicador, $chatId)
+    {
+        ChatIaMensaje::where('id_indicador', $indicador->id)
+            ->where('id_user', Auth::id())
+            ->where('chat_id', $chatId)
+            ->delete();
+
+        $autor = 'Id: '.Auth::id().' - '.Auth::user()->name.' - '.Auth::user()->puesto;
+        LogBalanced::create([
+            'autor' => $autor,
+            'accion' => "deleted",
+            'descripcion' => "El usuario eliminó el chat de IA (id: ".$chatId.") del indicador: ".$indicador->nombre." (id: ".$indicador->id.")",
+            'ip' => request()->ip()
+        ]);
+
         return response()->json(['ok' => true]);
     }
 
@@ -2585,6 +2941,69 @@ public function borrar_info_indicador($id){
     ]);
 
     return back()->with('deleted', 'La información fue removida.');
+
+}
+
+
+
+
+
+public function borrar_info_indicador_admin(Request $request, $id){
+
+    $indicador_lleno = IndicadorLleno::where('id_movimiento', $id)->first();
+    $esMesVigente = $indicador_lleno && Carbon::parse($indicador_lleno->fecha_periodo)->isSameMonth(Carbon::now()->subMonth());
+
+    if($esMesVigente){
+
+        $autor = 'Id: '.auth()->user()->id.' - '.auth()->user()->name.' - '.auth()->user()->puesto;
+
+        $nombre_indicador = $indicador_lleno ? $indicador_lleno->nombre_campo : 'N/A';
+
+        IndicadorLleno::where('id_movimiento', $id)->delete();
+
+        LogBalanced::create([
+            'autor' => $autor,
+            'accion' => "deleted",
+            'descripcion' => "Se eliminó información del indicador (Movimiento: {$id}, Campo: {$nombre_indicador}). Periodo actual de llenado",
+            'ip' => request()->ip()
+        ]);
+
+        return back()->with('eliminado', 'La información fue removida.');
+    }
+
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required'
+    ]);
+
+    $credenciales = $request->only('email', 'password');
+
+    if(Auth::guard('admin')->validate($credenciales)){
+
+        $autor = 'Id: '.auth()->user()->id.' - '.auth()->user()->name.' - '.auth()->user()->puesto;
+
+        $nombre_indicador = $indicador_lleno ? $indicador_lleno->nombre_campo : 'N/A';
+
+        IndicadorLleno::where('id_movimiento', $id)->delete();
+
+        LogBalanced::create([
+            'autor' => $autor,
+            'accion' => "deleted",
+            'descripcion' => "Se eliminó información del indicador (Movimiento: {$id}, Campo: {$nombre_indicador}). Autorizado por el admin: {$request->email}",
+            'ip' => request()->ip()
+        ]);
+
+        return back()->with('eliminado', 'La información fue removida.');
+    }
+
+    LogBalanced::create([
+        'autor' => 'Id: '.auth()->user()->id.' - '.auth()->user()->name,
+        'accion' => "failed_delete",
+        'descripcion' => "Intento de eliminación de indicador (Movimiento: {$id}) con credenciales de admin inválidas",
+        'ip' => request()->ip()
+    ]);
+
+    return back()->withErrors(['admin' => 'Credenciales de administrador incorrectas.']);
 
 }
 
@@ -2743,6 +3162,8 @@ public function indicador_lleno_show_user_foraneo(Indicador $indicador){
 
 public function analizar_indicador_usuario(Request $request, Indicador $indicador){
 
+
+
     //este es para mostrar los datos en el select
    $campos_graficar = IndicadorLleno::where('id_indicador', $indicador->id)->distinct()->pluck('nombre_campo');
   
@@ -2751,7 +3172,7 @@ public function analizar_indicador_usuario(Request $request, Indicador $indicado
         ? Carbon::parse(request('fecha_inicio'), config('app.timezone'))
             ->startOfDay()
             ->utc()
-        : "2025-01-01T06:00:00.000000Z";
+        : "2026-01-01T06:00:00.000000Z";
 
 
 
@@ -3479,7 +3900,7 @@ public function analizar_indicador(Request $request, Indicador $indicador){
         ? Carbon::parse(request('fecha_inicio'), config('app.timezone'))
             ->startOfDay()
             ->utc()
-        : "2025-01-01T06:00:00.000000Z";
+        : "2026-01-01T06:00:00.000000Z";
 
 
 
@@ -3675,11 +4096,15 @@ if(!empty($campo_graficar)){
 
 
         if($request->mostrar_mes){
-            $ultimo_mes = IndicadorLleno::where('nombre_campo', $campo_graficar)->where('fecha_periodo', $request->mostrar_mes)->first();   
+            $ultimo_mes = IndicadorLleno::where('nombre_campo', $campo_graficar)->where('fecha_periodo', $request->mostrar_mes)->first();
+            if(!$ultimo_mes){
+                //El mostrar_mes viene de otro campo (stale en la URL), usamos el ultimo registro del campo actual
+                $ultimo_mes = IndicadorLleno::where('nombre_campo', $campo_graficar)->orderBy('fecha_periodo', 'desc')->first();
+            }
         }
         else{
-            $ultimo_mes = IndicadorLleno::where('nombre_campo', $campo_graficar)->latest()->first();
-            
+            $ultimo_mes = IndicadorLleno::where('nombre_campo', $campo_graficar)->orderBy('fecha_periodo', 'desc')->first();
+
         }
 
         $campos_llenos = 'personalizado';
@@ -3713,6 +4138,8 @@ else{
         ->orderBy('fecha_periodo', 'desc')
         ->get();
 
+
+        
 
     $historico = $registros->map(function ($item) {
             return [
@@ -3796,10 +4223,10 @@ else{
 
     
         if($request->mostrar_mes){
-            $ultimo_mes = IndicadorLleno::where('id_indicador', $indicador->id)->where('fecha_periodo', $request->mostrar_mes)->where('final', 'on')->first();   
+            $ultimo_mes = IndicadorLleno::where('id_indicador', $indicador->id)->where('fecha_periodo', $request->mostrar_mes)->where('final', 'on')->first();
         }
         else{
-            $ultimo_mes = IndicadorLleno::where('id_indicador', $indicador->id)->where('final', 'on')->latest()->first();
+            $ultimo_mes = IndicadorLleno::where('id_indicador', $indicador->id)->where('final', 'on')->orderBy('fecha_periodo', 'desc')->first();
             
         }
 
@@ -3958,10 +4385,54 @@ private function datosComparacion(Indicador $indicador, $inicio, $fin)
     ];
 }
 
+public function comparar_indicador_usuario(Request $request, Indicador $indicador)
+{
+    $userDepto = Auth::user()->id_departamento;
 
+    $indicadores = Indicador::with('departamento')
+        ->where('id', '!=', $indicador->id)
+        ->where(function ($q) use ($userDepto) {
+            $q->where('indicadores.id_departamento', $userDepto)
+              ->orWhereHas('departamentosForaneos', function ($q2) use ($userDepto) {
+                  $q2->where('id_departamento', $userDepto);
+              });
+        })
+        ->orderBy('nombre')
+        ->get();
 
+    $inicio = $request->filled('fecha_inicio')
+        ? Carbon::parse($request->input('fecha_inicio'), config('app.timezone'))
+            ->startOfDay()
+            ->utc()
+        : Carbon::now(config('app.timezone'))
+            ->startOfYear()
+            ->utc();
 
+    $fin = $request->filled('fecha_fin')
+        ? Carbon::parse($request->input('fecha_fin'), config('app.timezone'))
+            ->endOfDay()
+            ->utc()
+        : Carbon::now(config('app.timezone'))
+            ->endOfYear()
+            ->utc();
 
+    $actual = $this->datosComparacion($indicador, $inicio, $fin);
+
+    $comparado = null;
+    if ($request->filled('con') && $request->input('con') != $indicador->id) {
+        $otro = Indicador::find($request->input('con'));
+
+        if ($otro) {
+            $comparado = $this->datosComparacion($otro, $inicio, $fin);
+        }
+    }
+
+    $tipo = in_array($request->input('tipo'), ['line', 'bar', 'doughnut'], true)
+        ? $request->input('tipo')
+        : 'line';
+
+    return view('user.comparar_indicador', compact('indicador', 'indicadores', 'actual', 'comparado', 'inicio', 'fin', 'tipo'));
+}
 
 
 

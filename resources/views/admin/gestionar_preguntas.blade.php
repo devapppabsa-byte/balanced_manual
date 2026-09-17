@@ -79,7 +79,7 @@
     </div>
 </div>
 
-<div class="container-fluid py-4">
+<div class="container-fluid py-4" style="padding-bottom: 180px;">
     <div class="row justify-content-center">
         <div class="col-12 col-xl-11">
             <!-- Header Card -->
@@ -216,13 +216,16 @@
                                                 <th style="min-width: 120px;">
                                                     <small class="text-muted fw-semibold text-uppercase">Línea</small>
                                                 </th>
+                                                <th style="min-width: 120px;">
+                                                    <small class="text-muted fw-semibold text-uppercase">Fecha</small>
+                                                </th>
                                                 <th class="text-center pe-4" style="width: 140px;">
                                                     <small class="text-muted fw-semibold text-uppercase">Acción</small>
                                                 </th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach ($clientes as $cliente)
+                                            @foreach ($contestaciones as $c)
                                                 <tr class="border-bottom">
                                                     <td class="ps-4">
                                                         <div class="d-flex align-items-center">
@@ -233,21 +236,26 @@
                                                             </div>
                                                             <div class="flex-grow-1">
                                                                 <small class="fw-semibold text-dark d-block">
-                                                                    {{$cliente->nombre}}
+                                                                    {{ $c->cliente->nombre ?? 'Sin cliente' }}
                                                                 </small>
                                                             </div>
                                                         </div>
                                                     </td>
                                                     <td>
                                                         <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25">
-                                                            {{$cliente->linea}}
+                                                            {{ $c->cliente->linea ?? '—' }}
                                                         </span>
+                                                    </td>
+                                                    <td>
+                                                        <small class="text-muted">
+                                                            {{ \Carbon\Carbon::parse($c->created_at)->translatedFormat('d/m/Y') }}
+                                                        </small>
                                                     </td>
                                                     <td class="text-center pe-4">
                                                         <a class="btn btn-sm btn-outline-primary" 
-                                                           href="{{route('show.respuestas', ['cliente' => $cliente->id, 'encuesta' => $encuesta->id])}}"
+                                                           href="{{route('show.respuestas', ['cliente' => $c->id_cliente, 'encuesta' => $encuesta->id, 'contestacion' => $c->id])}}"
                                                            data-mdb-tooltip-init 
-                                                           title="Ver respuestas de {{$cliente->nombre}}">
+                                                           title="Ver respuestas de {{ $c->cliente->nombre ?? 'cliente' }} del {{ \Carbon\Carbon::parse($c->created_at)->translatedFormat('d/m/Y') }}">
                                                             <i class="fa-solid fa-eye me-1"></i>
                                                             Ver
                                                         </a>
@@ -273,10 +281,16 @@
                 </div>
             </div>
 
-            <!-- Resultados Card -->
-            <div class="row mt-4">
-                <div class="col-12">
-                    <div class="card border-0 shadow-sm">
+        </div>
+    </div>
+</div>
+
+<!-- Resultados Card fija al fondo de la pantalla -->
+<div class="resultados-footer">
+    <div class="resultados-footer-inner">
+        <div class="row g-0 mt-2">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm rounded-0">
                         <div class="card-header bg-white border-bottom py-3">
                             <h5 class="mb-0 fw-bold">
                                 <i class="fa-solid fa-medal text-primary me-2"></i>
@@ -286,9 +300,9 @@
                         <div class="card-body">
                             <div class="row g-4 justify-content-center">
                                 <div class="col-12 col-md-4">
-                                    <div class="text-center p-4 bg-light rounded">
+                                    <div class="text-center py-2 px-4 bg-light rounded">
                                         <div class="mb-2">
-                                            <i class="fa-solid fa-trophy text-warning" style="font-size: 2rem;"></i>
+                                            <i class="fa-solid fa-trophy text-warning" style="font-size: 1.4rem;"></i>
                                         </div>
                                         <h6 class="text-muted fw-semibold mb-2">Puntuación Máxima</h6>
                                         @if ($numero_preguntas_cuantificables != 0)
@@ -305,9 +319,9 @@
                                 </div>
                                 
                                 <div class="col-12 col-md-4">
-                                    <div class="text-center p-4 bg-light rounded">
+                                    <div class="text-center py-2 px-4 bg-light rounded">
                                         <div class="mb-2">
-                                            <i class="fa-solid fa-star text-success" style="font-size: 2rem;"></i>
+                                            <i class="fa-solid fa-star text-success" style="font-size: 1.4rem;"></i>
                                         </div>
                                         <h6 class="text-muted fw-semibold mb-2">Puntuación Obtenida</h6>
                                         @if ($total_obtenido !== null && $total_obtenido > 0)
@@ -324,9 +338,9 @@
                                 </div>
 
                                 <div class="col-12 col-md-4">
-                                    <div class="text-center p-4 bg-light rounded">
+                                    <div class="text-center py-2 px-4 bg-light rounded">
                                         <div class="mb-2">
-                                            <i class="fa-solid fa-percent text-info" style="font-size: 2rem;"></i>
+                                            <i class="fa-solid fa-percent text-info" style="font-size: 1.4rem;"></i>
                                         </div>
                                         <h6 class="text-muted fw-semibold mb-2">% Cumplimiento</h6>
                                         @if ($total_obtenido !== null && $total_obtenido > 0 && $numero_preguntas_cuantificables > 0)
@@ -352,12 +366,28 @@
             </div>
         </div>
     </div>
-</div>
 
 <style>
     .avatar-sm {
         width: 32px;
         height: 32px;
+    }
+
+    .resultados-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 1030;
+        background-color: #ffffff;
+        border-top: 1px solid rgba(0, 0, 0, .125);
+        box-shadow: 0 -0.25rem 0.5rem rgba(0, 0, 0, .05);
+    }
+
+    .resultados-footer-inner {
+        max-width: 1140px;
+        margin: 0 auto;
+        padding: 0 .75rem;
     }
     
     .table tbody tr {
@@ -426,7 +456,7 @@
 
 <!-- Modal de Gráficas -->
 <div class="modal fade" id="grafico" tabindex="-1" aria-labelledby="graficasModalLabel" aria-hidden="true" data-mdb-backdrop="static">
-    <div class="modal-dialog modal-xl modal-fullscreen-sm-down modal-dialog-centered">
+    <div class="modal-dialog modal-fullscreen">
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header bg-primary text-white border-0 py-3">
                 <h5 class="modal-title fw-bold" id="graficasModalLabel">
@@ -436,63 +466,119 @@
                 <button type="button" class="btn-close btn-close-white" data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <!-- Tabs navs -->
-                <ul class="nav nav-tabs nav-justified mb-4 border-bottom" id="graficasTabs" role="tablist">
+                <!-- Tabs de semestre -->
+                <ul class="nav nav-pills nav-justified mb-4" id="semestresTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <a data-mdb-tab-init 
-                           class="nav-link fw-semibold active" 
-                           id="tab-barras" 
-                           href="#tabs-barras" 
-                           role="tab" 
-                           aria-controls="tabs-barras" 
-                           aria-selected="true">
-                            <i class="fa-solid fa-chart-column me-2"></i>
-                            Gráfico de Barras
+                        <a data-mdb-tab-init class="nav-link fw-semibold active" id="sem1-tab" href="#sem1-pane" role="tab" aria-controls="sem1-pane" aria-selected="true">
+                            <i class="fa-solid fa-calendar me-2"></i>
+                            Enero - Junio
                         </a>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <a data-mdb-tab-init 
-                           class="nav-link fw-semibold" 
-                           id="tab-lineas" 
-                           href="#tabs-lineas" 
-                           role="tab" 
-                           aria-controls="tabs-lineas" 
-                           aria-selected="false">
-                            <i class="fa-solid fa-chart-line me-2"></i>
-                            Gráfico de Línea
-                        </a>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <a data-mdb-tab-init 
-                           class="nav-link fw-semibold" 
-                           id="tab-pie" 
-                           href="#tabs-pie" 
-                           role="tab" 
-                           aria-controls="tabs-pie" 
-                           aria-selected="false">
-                            <i class="fa-solid fa-chart-pie me-2"></i>
-                            Gráfico de Pie
+                        <a data-mdb-tab-init class="nav-link fw-semibold" id="sem2-tab" href="#sem2-pane" role="tab" aria-controls="sem2-pane" aria-selected="false">
+                            <i class="fa-solid fa-calendar me-2"></i>
+                            Julio - Diciembre
                         </a>
                     </li>
                 </ul>
-                <!-- Tabs content -->
-                <div class="tab-content" id="graficasContent">
-                    <div class="tab-pane fade show active" id="tabs-barras" role="tabpanel" aria-labelledby="tab-barras">
-                        <div class="p-3">
-                            <canvas id="chartBarras"></canvas>
+                <!-- Tabs de semestre -->
+
+                <!-- Tabs content de semestre -->
+                <div class="tab-content" id="semestresContent">
+                    <div class="tab-pane fade show active" id="sem1-pane" role="tabpanel" aria-labelledby="sem1-tab">
+                        @if($total_s1 > 0)
+                        <ul class="nav nav-tabs nav-justified mb-4 border-bottom" id="graficasTabs1" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <a data-mdb-tab-init class="nav-link fw-semibold active" id="tab-barras-1" href="#tabs-barras-1" role="tab" aria-controls="tabs-barras-1" aria-selected="true">
+                                    <i class="fa-solid fa-chart-column me-2"></i>
+                                    Gráfico de Barras
+                                </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a data-mdb-tab-init class="nav-link fw-semibold" id="tab-lineas-1" href="#tabs-lineas-1" role="tab" aria-controls="tabs-lineas-1" aria-selected="false">
+                                    <i class="fa-solid fa-chart-line me-2"></i>
+                                    Gráfico de Línea
+                                </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a data-mdb-tab-init class="nav-link fw-semibold" id="tab-pie-1" href="#tabs-pie-1" role="tab" aria-controls="tabs-pie-1" aria-selected="false">
+                                    <i class="fa-solid fa-chart-pie me-2"></i>
+                                    Gráfico de Pie
+                                </a>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="graficasContent1">
+                            <div class="tab-pane fade show active" id="tabs-barras-1" role="tabpanel" aria-labelledby="tab-barras-1">
+                                <div class="p-3">
+                                    <canvas id="chartBarrasS1"></canvas>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="tabs-lineas-1" role="tabpanel" aria-labelledby="tab-lineas-1">
+                                <div class="p-3">
+                                    <canvas id="chartLineaS1"></canvas>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="tabs-pie-1" role="tabpanel" aria-labelledby="tab-pie-1">
+                                <div class="p-3">
+                                    <canvas id="chartPieS1"></canvas>
+                                </div>
+                            </div>
                         </div>
+                        @else
+                            <div class="text-center p-5">
+                                <i class="fa-solid fa-circle-info fa-3x text-muted mb-3"></i>
+                                <p class="text-muted fs-5">Sin contestaciones en este semestre.</p>
+                            </div>
+                        @endif
                     </div>
-                    <div class="tab-pane fade" id="tabs-lineas" role="tabpanel" aria-labelledby="tab-lineas">
-                        <div class="p-3">
-                            <canvas id="chartLinea"></canvas>
+                    <div class="tab-pane fade" id="sem2-pane" role="tabpanel" aria-labelledby="sem2-tab">
+                        @if($total_s2 > 0)
+                        <ul class="nav nav-tabs nav-justified mb-4 border-bottom" id="graficasTabs2" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <a data-mdb-tab-init class="nav-link fw-semibold active" id="tab-barras-2" href="#tabs-barras-2" role="tab" aria-controls="tabs-barras-2" aria-selected="true">
+                                    <i class="fa-solid fa-chart-column me-2"></i>
+                                    Gráfico de Barras
+                                </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a data-mdb-tab-init class="nav-link fw-semibold" id="tab-lineas-2" href="#tabs-lineas-2" role="tab" aria-controls="tabs-lineas-2" aria-selected="false">
+                                    <i class="fa-solid fa-chart-line me-2"></i>
+                                    Gráfico de Línea
+                                </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a data-mdb-tab-init class="nav-link fw-semibold" id="tab-pie-2" href="#tabs-pie-2" role="tab" aria-controls="tabs-pie-2" aria-selected="false">
+                                    <i class="fa-solid fa-chart-pie me-2"></i>
+                                    Gráfico de Pie
+                                </a>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="graficasContent2">
+                            <div class="tab-pane fade show active" id="tabs-barras-2" role="tabpanel" aria-labelledby="tab-barras-2">
+                                <div class="p-3">
+                                    <canvas id="chartBarrasS2"></canvas>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="tabs-lineas-2" role="tabpanel" aria-labelledby="tab-lineas-2">
+                                <div class="p-3">
+                                    <canvas id="chartLineaS2"></canvas>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="tabs-pie-2" role="tabpanel" aria-labelledby="tab-pie-2">
+                                <div class="p-3">
+                                    <canvas id="chartPieS2"></canvas>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="tab-pane fade" id="tabs-pie" role="tabpanel" aria-labelledby="tab-pie">
-                        <div class="p-3">
-                            <canvas id="chartPie"></canvas>
-                        </div>
+                        @else
+                            <div class="text-center p-5">
+                                <i class="fa-solid fa-circle-info fa-3x text-muted mb-3"></i>
+                                <p class="text-muted fs-5">Sin contestaciones en este semestre.</p>
+                            </div>
+                        @endif
                     </div>
                 </div>
+                <!-- Tabs content de semestre -->
             </div>
         </div>
     </div>
@@ -644,117 +730,137 @@
 @section('scripts')
 
 <script>
-const etiquetas = @json($labels);
-const valores   = @json($valores);
-
 const minimo = 5;
 
-const colores = valores.map(v =>
-    v < minimo ? '#e74c3c' : '#2ecc71'
-);
-
-const ctx = document.getElementById('chartBarras').getContext('2d');
-
-new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: etiquetas,
-        datasets: [{
-            label: 'Puntuación promedio por cliente',
-            data: valores,
-            backgroundColor: colores,
-            borderColor: '#2c3e50',
-            borderWidth: 1
-        }]
+const datosSemestres = [
+    {
+        etiquetas: @json($labels_s1),
+        valores: @json($valores_s1),
+        sufijo: 'S1'
     },
-    options: {
-        responsive: true,
-        plugins: {
-            title: {
-                display: true,
-                text: 'Resultados de la encuesta por cliente'
-            }
+    {
+        etiquetas: @json($labels_s2),
+        valores: @json($valores_s2),
+        sufijo: 'S2'
+    }
+];
+
+const chartsInstances = {};
+
+function destruirSiExiste(canvasId) {
+    if (chartsInstances[canvasId]) {
+        chartsInstances[canvasId].destroy();
+        delete chartsInstances[canvasId];
+    }
+}
+
+function crearBarrasSemestre(etiquetas, valores, sufijo) {
+    const canvas = document.getElementById('chartBarras' + sufijo);
+    if (!canvas) return;
+
+    const canvasId = 'chartBarras' + sufijo;
+    destruirSiExiste(canvasId);
+
+    const colores = valores.map(v =>
+        v < minimo ? '#e74c3c' : '#2ecc71'
+    );
+
+    chartsInstances[canvasId] = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: etiquetas,
+            datasets: [{
+                label: 'Puntuación promedio por cliente',
+                data: valores,
+                backgroundColor: colores,
+                borderColor: '#2c3e50',
+                borderWidth: 1
+            }]
         },
-        scales: {
-            y: {
-                beginAtZero: true,
-                max: 10,
-                ticks: {
-                    stepSize: 1
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Resultados de la encuesta por cliente'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 10,
+                    ticks: {
+                        stepSize: 1
+                    }
                 }
             }
         }
-    }
-});
-</script>
-
-
-
-
-
-
-<script>
-
-
-
-
-const coloresPuntos = valores.map(v =>
-    v < minimo ? '#e74c3c' : '#2ecc71'
-);
-
-const ctxlinea = document.getElementById('chartLinea').getContext('2d');
-
-new Chart(ctxlinea, {
-    type: 'line',
-    data: {
-        labels: etiquetas,
-        datasets: [{
-            label: 'Puntuación promedio por cliente',
-            data: valores,
-            borderColor: '#2980b9',
-            backgroundColor: 'rgba(52, 152, 219, 0.15)',
-            fill: true,
-            tension: 0.3,
-            pointBackgroundColor: coloresPuntos,
-            pointBorderColor: '#2c3e50',
-            pointRadius: 6,
-            pointHoverRadius: 8
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            title: {
-                display: true,
-                text: 'Resultados de la encuesta por cliente'
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                max: 10,
-                ticks: {
-                    stepSize: 1
-                }
-            }
-        }
-    }
-});
-</script>
-
-<script>
-    // Colores automáticos (uno por cliente)
-    const coloresPie = etiquetas.map((_, i) => {
-        const paleta = [
-            '#3498db', '#2ecc71', '#e74c3c', '#f1c40f',
-            '#9b59b6', '#1abc9c', '#e67e22', '#34495e'
-        ];
-        return paleta[i % paleta.length];
     });
+}
 
-    const ctxPie = document.getElementById('chartPie').getContext('2d');
+function crearLineaSemestre(etiquetas, valores, sufijo) {
+    const canvas = document.getElementById('chartLinea' + sufijo);
+    if (!canvas) return;
 
-    new Chart(ctxPie, {
+    const canvasId = 'chartLinea' + sufijo;
+    destruirSiExiste(canvasId);
+
+    const coloresPuntos = valores.map(v =>
+        v < minimo ? '#e74c3c' : '#2ecc71'
+    );
+
+    chartsInstances[canvasId] = new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: etiquetas,
+            datasets: [{
+                label: 'Puntuación promedio por cliente',
+                data: valores,
+                borderColor: '#2980b9',
+                backgroundColor: 'rgba(52, 152, 219, 0.15)',
+                fill: true,
+                tension: 0.3,
+                pointBackgroundColor: coloresPuntos,
+                pointBorderColor: '#2c3e50',
+                pointRadius: 6,
+                pointHoverRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Resultados de la encuesta por cliente'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 10,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+}
+
+function crearPieSemestre(etiquetas, valores, sufijo) {
+    const canvas = document.getElementById('chartPie' + sufijo);
+    if (!canvas) return;
+
+    const canvasId = 'chartPie' + sufijo;
+    destruirSiExiste(canvasId);
+
+    const paleta = [
+        '#3498db', '#2ecc71', '#e74c3c', '#f1c40f',
+        '#9b59b6', '#1abc9c', '#e67e22', '#34495e'
+    ];
+    const coloresPie = etiquetas.map((_, i) => paleta[i % paleta.length]);
+
+    chartsInstances[canvasId] = new Chart(canvas.getContext('2d'), {
         type: 'doughnut',
         data: {
             labels: etiquetas,
@@ -786,35 +892,31 @@ new Chart(ctxlinea, {
             }
         }
     });
+}
+
+function crearGrafica(etiquetas, valores, sufijo, tipo) {
+    if (tipo === 'Barras') crearBarrasSemestre(etiquetas, valores, sufijo);
+    else if (tipo === 'Linea') crearLineaSemestre(etiquetas, valores, sufijo);
+    else if (tipo === 'Pie') crearPieSemestre(etiquetas, valores, sufijo);
+}
+
+function renderizarGraficasVisibles() {
+    document.querySelectorAll('#grafico .tab-pane.show.active canvas[id^="chart"]').forEach(canvas => {
+        const sufijo = canvas.id.replace(/^chart(Barras|Linea|Pie)/, '');
+        const datos = datosSemestres.find(d => d.sufijo === sufijo);
+        if (!datos) return;
+        const tipo = canvas.id.match(/^chart(Barras|Linea|Pie)/)[1];
+        crearGrafica(datos.etiquetas, datos.valores, sufijo, tipo);
+    });
+}
+
+document.addEventListener('shown.bs.modal', e => {
+    if (e.target && e.target.id === 'grafico') renderizarGraficasVisibles();
+});
+
+document.addEventListener('shown.bs.tab', () => {
+    renderizarGraficasVisibles();
+});
 </script>
 
-
-
-
-
-
-{{-- AQUI COMIENZAN LOS RAFICOS POR MES --}}
-
-
-
-
-
-
-
-{{-- AQUI COMIENZAN LOS RAFICOS POR MES --}}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
 @endsection

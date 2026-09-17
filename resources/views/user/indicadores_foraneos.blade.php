@@ -163,11 +163,6 @@
                                                 ?? " <i class='fa-solid fa-industry'></i> Planta {$indicador->planta}")
                                     !!}
                                 </div>
-                                <div class="col-auto mx-2">
-                                    <a href="#" class="text-white" data-mdb-ripple-init data-mdb-tooltip-init data-mdb-placement="top" title="Ver historial" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#detall{{ $indicador->id }}">
-                                        <i class="fa-solid fa-list"></i>
-                                    </a>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -227,6 +222,8 @@
                                     </span>
                                 </div>
                             </div>
+
+                            
                         </div>
                     </a>
                         <div class="card-footer p-2">
@@ -247,11 +244,6 @@
                                                     ?? " <i class='fa-solid fa-industry'></i> Planta {$indicador->planta}")
                                         !!}
                                     </div>
-                                <div class="col-auto mx-2">
-                                    <a href="#" class="text-white" data-mdb-ripple-init data-mdb-tooltip-init data-mdb-placement="top" title="Ver historial" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#detall{{ $indicador->id }}">
-                                        <i class="fa-solid fa-list"></i>
-                                    </a>
-                                </div>
                                 </div>
                         </div>
                     </div>
@@ -325,11 +317,6 @@
                                                 : ($tipos[strtolower($indicador->planta)] 
                                                     ?? " <i class='fa-solid fa-industry'></i> Planta {$indicador->planta}")
                                         !!}
-                                    </div>
-                                    <div class="col-auto mx-2">
-                                        <a href="#" class="text-white" data-mdb-ripple-init data-mdb-tooltip-init data-mdb-placement="top" title="Ver historial" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#detall{{ $indicador->id }}">
-                                            <i class="fa-solid fa-list"></i>
-                                        </a>
                                     </div>
                                 </div>
                         </div>                        

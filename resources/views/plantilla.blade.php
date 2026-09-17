@@ -87,6 +87,30 @@
     </footer> --}}
     <script src="{{asset('js/jquery-3.6.0.min.js')}}"></script>
     <script src="{{asset('js/toastr.min.js')}}"></script>
+    <script>
+        // Sanitiza el auto-init de MDB antes de que cargue: si un boton
+        // [data-mdb-modal-init] apunta a un target que no existe en el DOM,
+        // se le quita el atributo. Sin esto, init.js crashea en el forEach
+        // (modal va antes que tab) y las pestanas con [data-mdb-tab-init]
+        // nunca registran su handler.
+        (function () {
+            function getSelector(element) {
+                var selector = element.getAttribute('data-mdb-target');
+                if (!selector || selector === '#') {
+                    var hrefAttr = element.getAttribute('href');
+                    selector = hrefAttr && hrefAttr !== '#' ? hrefAttr.trim() : null;
+                }
+                return selector;
+            }
+
+            document.querySelectorAll('[data-mdb-modal-init]').forEach(function (el) {
+                var selector = getSelector(el);
+                if (!selector || !document.querySelector(selector)) {
+                    el.removeAttribute('data-mdb-modal-init');
+                }
+            });
+        })();
+    </script>
     <script type="text/javascript" src="{{asset('js/mdb.umd.min.js')}}"></script> 
     <script src="{{asset('js/chart.js')}}"></script>
     <script src="{{asset('js/interact.min.js')}}"></script>

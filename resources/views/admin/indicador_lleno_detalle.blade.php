@@ -500,6 +500,7 @@
 
             </div>
 
+            <h2>{{$item->id_movimiento}}</h2>
             <!-- COMENTARIOS -->
             <div class="mt-3 text-center">
 

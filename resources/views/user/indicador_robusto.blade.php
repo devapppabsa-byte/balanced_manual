@@ -75,7 +75,7 @@
 
                                 <input type="date"
                                     name="fecha_inicio"
-                                    value="{{ request('fecha_inicio') ?? '2025-01-01' }}"
+                                    value="{{ request('fecha_inicio') ?? now()->startOfYear()->format('Y-m-d') }}"
                                     class="form-control border-0 bg-light datepicker"
                                     onchange="this.form.submit()">
                             </div>
@@ -139,7 +139,17 @@
         
                         </div>
 
-
+                        <div>
+                            <label class="form-label small text-muted fw-semibold mb-1">&nbsp;</label>
+                            <a href="{{ route('comparar.indicador.usuario', $indicador->id) }}" class="btn btn-primary px-4">
+                                <i class="fa-solid fa-scale-balanced me-1"></i>
+                                Comparar con otro indicador
+                            </a>
+                            <a href="{{ route('analizar.cruzados.vista.usuario', $indicador->id) }}" class="btn btn-dark px-4" style="display: none;">
+                                <i class="fa-solid fa-robot me-1"></i>
+                                Análisis con IA
+                            </a>
+                        </div>
 
                     </div>
                     {{-- <button type="submit" id="btn-trigger-form" style="display: none;"></button> --}}
@@ -183,7 +193,7 @@
 
 
 
- @if ($carga_excel !== $ahora  || $carga_indicador === $ahora)
+  @if ($carga_excel !== $ahora  || $carga_indicador === $ahora)
 
     @if ($carga_indicador === $ahora)
 
@@ -203,28 +213,31 @@
     @endif
 
 
-@else
-  
-    <button class="btn btn-success flotante rounded btn-lg p-3" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#llenado_indicadores">
-        <i class="fa fa-edit"></i>
-        Llenar indicador del mes
-    </button>
+    @else
 
-@endif 
+        @if ($bloqueo_llenado === '1')
 
+            <button class="btn btn-secondary flotante rounded btn-lg p-3" disabled>
+                <i class="fa fa-ban"></i>
+                Llenado bloqueado por el admin
+            </button>
 
+        @else
 
-    <!-- @if (Auth::user()->departamento->nombre == "Ventas")
-        {{-- ponerla solo visible para atencio al clientes --}}
-        
             <button class="btn btn-success flotante rounded btn-lg p-3" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#llenado_indicadores">
                 <i class="fa fa-edit"></i>
                 Llenar indicador del mes
             </button>
 
+        @endif
 
-    @endif -->
+    @endif  
 
+{{-- 
+        <button class="btn btn-success flotante rounded btn-lg p-3" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#llenado_indicadores">
+            <i class="fa fa-edit"></i>
+            Llenar indicador del mes
+        </button> --}}
 
 
 
@@ -288,11 +301,12 @@
                     @if (!$campos_vacios->isEmpty() )
                               
                     
-                    <div class="col-12">
+                    {{-- <div class="col-12">
                             <div class="form-group">
-                                <input type="date" name="fecha_periodo" class="form-control" readonly value="{{ now()->format('Y-m-d') }}">
+                                <label class="fw-bold">Periodo (mes a registrar)</label>
+                                <input type="date" name="fecha_periodo" class="form-control" value="{{ $fecha_indicador->format('Y-m-d') }}" required>
                             </div>
-                      </div>
+                      </div> --}}
                     
                     <div class="col-12 bg-light p-3 rounded ql-toolbar">
                             <label> <i class="fa fa-table"></i> Información extra para el Indicador: </label>
@@ -335,6 +349,7 @@
 
 @php
     $semaforo="";
+    $campo_comentario = $campos_llenos->firstWhere('nombre_campo', 'comentario');
     if($indicador->tipo_indicador == "riesgo"){
 
         if($indicador->meta_esperada <= $ultimo_mes->informacion_campo){
@@ -362,7 +377,7 @@
 
 
 <!-- Modal -->
-<div class="modal fade" id="campos_indicador" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade" id="modal_info_extra" tabindex="-1" aria-labelledby="modalInfoExtraLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-centered">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
@@ -462,21 +477,46 @@
 
 
 <div class="container-fluid mt-3">
-    <div class="row justify-content-center">
-        <div class="col-10">
+    <div class="row justify-content-center mt-3">
+        <div class="col-12">
+            <div class="row justify-content-center">
+                <div class="col-3 text-center my-1">
+                    <h6 class="py-1 text-dark bg-white p-0 rounded-pill fw-bolder">
+                        <i class="fa-solid fa-bullseye text-danger"></i>
+                        {{ ($indicador->tipo_indicador == 'normal') ? 'Meta' : 'Limite' }}
+                        @if($indicador->unidad_medida === 'pesos')
+                            $ {{ $indicador->meta_esperada }}
+                        @elseif($indicador->unidad_medida === 'porcentaje')
+                            {{ $indicador->meta_esperada }}%
+                        @elseif($indicador->unidad_medida === 'dias')
+                            {{ $indicador->meta_esperada }} Días
+                        @elseif($indicador->unidad_medida === 'toneladas')
+                            {{ $indicador->meta_esperada }} Ton.
+                        @else
+                            {{ $indicador->meta_esperada }}
+                        @endif
+                    </h6>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-8 col-md-6 col-xxl-4 {{ $ultimo_mes->id_movimiento }}">
             <button type="button"
                     class="w-100 border-0 bg-transparent p-0"
                     data-mdb-ripple-init
                     data-mdb-modal-init
-                    data-mdb-target="#campos_indicador">
+                    data-mdb-target="#modal_info_extra">
 
-                <div class="card {{ $semaforo }}">
-                    <div class="card-body py-1">
-                        <h4 class="text-center fw-bold text-white">
+                <div class="card h-100 {{ $semaforo }}">
+                    <div class="card-body py-2 text-center h5">
+                        <div class="fw-bold text-white">
+                            @if ($campo_comentario)
+                                <i class="fa-solid fa-circle-info me-1"></i>
+                            @endif
                             {{ $ultimo_mes->nombre_campo }}
-                        </h4>
+                        </div>
 
-                        <h1 class="text-center fw-bold text-white">
+                        <div class="fw-bold text-white fs-1">
                             @if($indicador->unidad_medida === 'pesos')
                                 ${{ number_format($ultimo_mes->informacion_campo, 2) }}
                             @elseif($indicador->unidad_medida === 'porcentaje')
@@ -488,42 +528,35 @@
                             @else
                                 {{ round($ultimo_mes->informacion_campo, 2) }}
                             @endif
-                        </h1>
+                        </div>
 
-                        <h5 class="text-center fw-bold text-white text-capitalize">
+                        <div class="text-white text-capitalize small fw-semibold fs-2">
                             {{ Carbon::parse($ultimo_mes->fecha_periodo)->translatedFormat('F Y') }}
-                        </h5>
+                        </div>
                     </div>
                 </div>
             </button>
         </div>
-
-
-        {{-- <div class="col-10 text-center">
-            <button class="btn btn-dark btn-sm">
-                <i class="fa fa-trash"></i>
-                {{ $campo_lleno->id_movimiento }} | {{ $campo_lleno->created_at }} |  {{ now() }}
-            </button>
-        </div> --}}
+    </div>
+</div>
 
 
         <div class="col-10 text-center">
 
             @php
-                $fechaRegistro = $campo_lleno->created_at;
-                $mismoMes = $fechaRegistro->isSameMonth(now());
+                $idMovimientoEliminar = $ultimo_mes->id_movimiento;
+                $esMesVigente = \Carbon\Carbon::parse($ultimo_mes->fecha_periodo)->isSameMonth(\Carbon\Carbon::now()->subMonth());
             @endphp
 
-            <button class="btn btn-dark w-20 btn-sm"  data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#e{{$campo_lleno->id_movimiento}}"
-                    {{-- @if(!$mismoMes)" disabled onclick="alert('No se pueden eliminar registros de meses anteriores')" @endif  --}}>
-                <i class="fa fa-trash"></i> 
+            <button class="btn btn-dark w-20 btn-sm" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#e{{$idMovimientoEliminar}}">
+                <i class="fa fa-trash"></i>
             </button>
 
-            <div class="modal fade" id="e{{$campo_lleno->id_movimiento}}" tabindex="-1" aria-labelledby="eliminarRegistroLabel{{$campo_lleno->id_movimiento}}" aria-hidden="true" data-mdb-backdrop="static">
+            <div class="modal fade" id="e{{$idMovimientoEliminar}}" tabindex="-1" aria-labelledby="eliminarRegistroLabel{{$idMovimientoEliminar}}" aria-hidden="true" data-mdb-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content border-0 shadow-lg">
                         <div class="modal-header bg-danger text-white border-0 py-3">
-                            <h5 class="modal-title fw-bold" id="eliminarRegistroLabel{{$campo_lleno->id_movimiento}}">
+                            <h5 class="modal-title fw-bold" id="eliminarRegistroLabel{{$idMovimientoEliminar}}">
                                 <i class="fa-solid fa-triangle-exclamation me-2"></i>
                                 Confirmar Eliminación
                             </h5>
@@ -536,14 +569,28 @@
                                 </div>
                                 <h6 class="fw-semibold">¿Estás seguro de eliminar este registro?</h6>
                                 <p class="text-muted mb-0">
-                                    <strong>{{$campo_lleno->nombre_campo}}</strong>
+                                    <strong>{{$ultimo_mes->nombre_campo}}</strong>
                                 </p>
                                 <small class="text-muted d-block mt-2">
                                     Esta acción no se puede deshacer.
                                 </small>
                             </div>
-                            <form action="{{route('borrar.info.indicador', $campo_lleno->id_movimiento)}}" method="POST">
+                            <form action="{{route('borrar.info.indicador.admin', $idMovimientoEliminar)}}" method="POST">
                                 @csrf @method('DELETE')
+                                @if(!$esMesVigente)
+                                <div class="mb-3 text-start">
+                                    <label class="form-label fw-semibold small mb-1">Correo del administrador</label>
+                                    <input type="email" name="email" class="form-control" placeholder="admin@empresa.com" required>
+                                </div>
+                                <div class="mb-3 text-start">
+                                    <label class="form-label fw-semibold small mb-1">Contraseña del administrador</label>
+                                    <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                                </div>
+                                <small class="text-danger d-block mb-3">
+                                    <i class="fa-solid fa-shield-halved me-1"></i>
+                                    Se requiere autorización de un administrador para eliminar registros.
+                                </small>
+                                @endif
                                 <div class="d-flex gap-2">
                                     <button type="button" class="btn btn-outline-secondary flex-fill" data-mdb-ripple-init data-mdb-dismiss="modal">
                                         Cancelar
@@ -559,7 +606,7 @@
                 </div>
             </div>
 
-            
+
         </div>
 
 
@@ -615,7 +662,7 @@
     <div class="row justify-content-center px-2">
 
 
-        <div class="col-12 col-sm-12 col-md-12 col-lg-5">
+        <div class="col-12 col-sm-12 col-md-12 col-lg-6">
             <div class="row">
 
                 <div class="col-12 p-1 bg-white mt-3 p-3">
@@ -644,20 +691,6 @@
                 </div>
 
                 <div class="col-12 p-1 bg-white mt-3 p-3">
-                    <h4>{{ request('campos_a_graficar') ? request('campos_a_graficar') : 'Gráfico de Tendencia'  }} |
-
-                        {!!  
-                            empty($indicador->planta)
-                                ? "<i class='fa-solid fa-circle-exclamation'></i> Sin asignación"
-                                : ($tipos[strtolower($indicador->planta)] 
-                                    ?? " <i class='fa-solid fa-industry'></i> Planta {$indicador->planta}")
-                        !!}
-                        
-                    </h4>
-                    <canvas id="graficoLine"></canvas>
-                </div>
-
-                <div class="col-12 p-1 bg-white mt-3 p-3">
 
                     <h4>{{ request('campos_a_graficar') ? request('campos_a_graficar') : 'Gráfico de Dona'  }} |
 
@@ -676,10 +709,24 @@
         </div>
 
 
-        <div class="col-12 col-sm-12 col-md-9 col-lg-5 ">
+        <div class="col-12 col-sm-12 col-md-9 col-lg-6 ">
 
 
             <div class="row justify-content-center border ms-1">
+                <div class="col-12 p-1 bg-white mt-3 p-3">
+                    <h4>{{ request('campos_a_graficar') ? request('campos_a_graficar') : 'Gráfico de Tendencia'  }} |
+
+                        {!!  
+                            empty($indicador->planta)
+                                ? "<i class='fa-solid fa-circle-exclamation'></i> Sin asignación"
+                                : ($tipos[strtolower($indicador->planta)] 
+                                    ?? " <i class='fa-solid fa-industry'></i> Planta {$indicador->planta}")
+                        !!}
+                        
+                    </h4>
+                    <canvas id="graficoLine"></canvas>
+                </div>
+            </div>
                 <div class="col-12 bg-white mt-3 p-3 shadow-sm">
                     <div class="row">
                         <div class="col-12 my-2">
@@ -1202,170 +1249,6 @@
 
 
 
-        <div class="col-12 col-sm-12 col-md-3 col-lg-2">
-            <div class="row justify-content-center border ms-1">
-
-                {{-- TENDENCIA --}}
-                <div class="col-12 bg-white mt-3 p-3">
-                    <div class="p-2 border rounded h-100">
-
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong>Tendencia</strong>
-                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalTendencia">
-                                <i class="fa fa-circle-info"></i>
-                            </button>
-                        </div>
-
-                        <div class="mt-2">
-                            <span class="badge bg-info me-1">{{ $resultado['tendencia'] }}</span>
-                            <span class="badge bg-dark">{{ $resultado['fuerza_tendencia'] }}</span>
-                        </div>
-
-                        <small class="text-muted d-block mt-2">
-                            Indica la dirección del indicador y qué tan confiable es la tendencia según su comportamiento.
-                        </small>
-
-                    </div>
-                </div>
-
-                {{-- CAMBIO --}}
-                <div class="col-12 bg-white p-3">
-                    <div class="p-2 border rounded h-100">
-
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong>Cambio</strong>
-                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalCambio">
-                                <i class="fa fa-circle-info"></i>
-                            </button>
-                        </div>
-
-                        <div class="mt-2 fw-bold">
-                            {{ number_format($resultado['cambio'], 2) }}
-                            <span class="text-muted">
-                                ({{ number_format($resultado['cambio_porcentual'], 2) }}%)
-                            </span>
-                        </div>
-
-                        <small class="text-muted d-block mt-2">
-                            Diferencia entre el valor inicial y el actual en el periodo analizado.
-                        </small>
-
-                    </div>
-                </div>
-
-                {{-- ESTADO --}}
-                <div class="col-12 bg-white p-3">
-                    <div class="p-2 border rounded h-100">
-
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong>Estado actual</strong>
-                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalEstado">
-                                <i class="fa fa-circle-info"></i>
-                            </button>
-                        </div>
-
-                        <div class="mt-2">
-                            <span class="badge {{ $resultado['cumplimiento'] == 'en meta' ? 'bg-success' : 'bg-danger' }}">
-                                {{ $resultado['cumplimiento'] }}
-                            </span>
-                        </div>
-
-                        <small class="text-muted d-block mt-2">
-                            Evalúa si el valor más reciente cumple con la meta establecida.
-                        </small>
-
-                    </div>
-                </div>
-
-                {{-- HISTORICO --}}
-                <div class="col-12 bg-white p-3">
-                    <div class="p-2 border rounded h-100">
-
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong>Histórico</strong>
-                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalHistorico">
-                                <i class="fa fa-circle-info"></i>
-                            </button>
-                        </div>
-
-                        <div class="mt-2">
-                            <span class="badge bg-secondary">{{ $resultado['estado_historico'] }}</span>
-                            <span class="text-muted ms-1">
-                                ({{ number_format($resultado['porcentaje_cumplimiento'], 0) }}%)
-                            </span>
-                        </div>
-
-                        <small class="text-muted d-block mt-2">
-                            Muestra qué tan frecuentemente el indicador ha cumplido la meta en el tiempo.
-                        </small>
-
-                    </div>
-                </div>
-
-                {{-- ESTABILIDAD --}}
-                {{-- <div class="col-6 col-sm-4 col-md-3 col-lg-2 bg-white p-3">
-                    <div class="p-2 border rounded h-100">
-
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong>Estabilidad</strong>
-                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalEstabilidad">
-                                <i class="fa fa-circle-info"></i>
-                            </button>
-                        </div>
-
-                        <div class="mt-2">
-                            <span class="badge bg-warning text-dark">{{ $resultado['estabilidad'] }}</span>
-                        </div>
-
-                        <small class="text-muted d-block mt-2">
-                            Indica qué tanto varía el indicador; valores altos implican mayor fluctuación.
-                        </small>
-
-                    </div>
-                </div> --}}
-
-
-                {{-- PROYECCION --}}
-                <div class="col-12 bg-white p-3">
-                    <div class="p-2 border rounded h-100">
-
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong>Proyección siguiente</strong>
-                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalProyeccion">
-                                <i class="fa fa-circle-info"></i>
-                            </button>
-                        </div>
-
-                        <div class="mt-2 fw-bold">
-                            @if($indicador->unidad_medida === 'pesos')
-                                ${{ number_format($resultado['proyeccion_siguiente'], 2) }}
-
-                            @elseif($indicador->unidad_medida === 'porcentaje')
-                                {{ number_format($resultado['proyeccion_siguiente'], 2) }}%
-
-                            @elseif($indicador->unidad_medida === 'dias')
-                                {{ number_format($resultado['proyeccion_siguiente'], 2) }} Días
-
-                            @elseif($indicador->unidad_medida === 'toneladas')
-                                {{ number_format($resultado['proyeccion_siguiente'], 2) }} Ton.
-
-                            @else
-                                {{ number_format($resultado['proyeccion_siguiente'], 2) }}
-                            @endif
-
-                        </div>
-
-                        <small class="text-muted d-block mt-2">
-                            Estimación del próximo valor basada en la tendencia actual del indicador.
-                        </small>
-
-                    </div>
-                </div>
-
-            </div>
-
-        </div>
-
         @else
 
         <div class="row justify-content-center">
@@ -1425,12 +1308,17 @@ document.addEventListener("DOMContentLoaded", function () {
         : datos.filter(d => d.referencia === "on");
 
 
-    const labels = [...new Set(
-        datosFinal.map(item => {
-            const fecha = new Date(item.fecha_periodo);
-            return `${mesesES[fecha.getMonth()]} ${fecha.getFullYear()}`;
-        })
-    )];
+    const fechasGrafica = datosFinal.map(item => new Date(item.fecha_periodo));
+    const idxPrimerMes = fechasGrafica.length
+        ? Math.min(...fechasGrafica.map(f => f.getFullYear() * 12 + f.getMonth()))
+        : new Date().getFullYear() * 12;
+    const idxUltimoMes = fechasGrafica.length
+        ? Math.max(...fechasGrafica.map(f => f.getFullYear() * 12 + f.getMonth()))
+        : new Date().getFullYear() * 12 + new Date().getMonth();
+    const labels = [];
+    for (let i = idxPrimerMes; i <= idxUltimoMes; i++) {
+        labels.push(`${mesesES[i % 12]} ${Math.floor(i / 12)}`);
+    }
 
 
 
@@ -1766,12 +1654,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const todosDatos = [...datosFinal];
 
-    const labels = [...new Set(
-        todosDatos.map(item => {
-            const fecha = new Date(item.fecha_periodo);
-            return `${mesesES[fecha.getMonth()]} ${fecha.getFullYear()}`;
-        })
-    )];
+    const fechasTendencia = todosDatos.map(item => new Date(item.fecha_periodo));
+    const idxPrimerMes = fechasTendencia.length
+        ? Math.min(...fechasTendencia.map(f => f.getFullYear() * 12 + f.getMonth()))
+        : new Date().getFullYear() * 12;
+    const idxUltimoMes = fechasTendencia.length
+        ? Math.max(...fechasTendencia.map(f => f.getFullYear() * 12 + f.getMonth()))
+        : new Date().getFullYear() * 12 + new Date().getMonth();
+    const labels = [];
+    for (let i = idxPrimerMes; i <= idxUltimoMes; i++) {
+        labels.push(`${mesesES[i % 12]} ${Math.floor(i / 12)}`);
+    }
 
     // ============================
     // METAS
@@ -2009,12 +1902,17 @@ document.addEventListener("DOMContentLoaded", function () {
         ? datos 
         : datos.filter(d => d.final === "on");
 
-    window.labels = [...new Set(
-        datosFinal.map(item => {
-            const fecha = new Date(item.fecha_periodo);
-            return `${mesesES[fecha.getMonth()]} ${fecha.getFullYear()}`;
-        })
-    )];
+    const fechasGlobal = datosFinal.map(item => new Date(item.fecha_periodo));
+    const idxPrimerMes = fechasGlobal.length
+        ? Math.min(...fechasGlobal.map(f => f.getFullYear() * 12 + f.getMonth()))
+        : new Date().getFullYear() * 12;
+    const idxUltimoMes = fechasGlobal.length
+        ? Math.max(...fechasGlobal.map(f => f.getFullYear() * 12 + f.getMonth()))
+        : new Date().getFullYear() * 12 + new Date().getMonth();
+    window.labels = [];
+    for (let i = idxPrimerMes; i <= idxUltimoMes; i++) {
+        window.labels.push(`${mesesES[i % 12]} ${Math.floor(i / 12)}`);
+    }
 
     window.VARIACION_ON = "{{ $indicador->variacion }}" === "on";
 

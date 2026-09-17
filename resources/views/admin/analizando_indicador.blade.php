@@ -57,7 +57,6 @@
     @include('admin.assets.nav')
 
     <div class="row">
-        
         <div class="card border-0 shadow-sm rounded-4">
             <div class="card-body py-3 px-4">
 
@@ -74,7 +73,7 @@
 
                                 <input type="date"
                                     name="fecha_inicio"
-                                    value="{{ request('fecha_inicio') ?? '2025-01-01' }}"
+                                    value="{{ request('fecha_inicio') ?? '2026-01-01' }}"
                                     class="form-control border-0 bg-light datepicker"
                                     onchange="this.form.submit()">
                             </div>
@@ -148,7 +147,7 @@
                                 Comparar con otro indicador
    
                             </a>
-                            <a href="{{ route('analizar.cruzados.vista', $indicador->id) }}" class="btn btn-dark   px-4">
+                            <a href="{{ route('analizar.cruzados.vista', $indicador->id) }}" class="btn btn-dark   px-4" style="display: none">
                                 <i class="fa-solid fa-robot me-1"></i>
                                 Análisis con IA
                             </a>
@@ -217,12 +216,12 @@ else{
         $campo_comentario = $campos_llenos->firstWhere('nombre_campo', 'comentario');
     @endphp
 
-    <div class="row justify-content-center g-3">
+    <div class="row justify-content-center mt-3">
 
         <div class="col-12">
             <div class="row justify-content-center">
-                <div class="col-2  text-center my-1 ">
-                    <h5 class="py-1 text-dark bg-white p-0 rounded-pill fw-bolder">
+                <div class="col-3  text-center my-1 ">
+                    <h6 class="py-1 text-dark bg-white p-0 rounded-pill fw-bolder">
                        <i class="fa-solid fa-bullseye text-danger"></i>
                         {{ ($indicador->tipo_indicador == 'normal') ? 'Meta' : 'Limite'  }}
                         @if($indicador->unidad_medida === 'pesos')
@@ -236,37 +235,30 @@ else{
                         @else
                             {{ $indicador->meta_esperada }}
                         @endif
-                    </h5>
+                    </h6>
                 </div>
             </div>
+
+            
         </div>
 
-        <div class="col-12 text-center">
-            <h6 class="text-muted fw-bold mb-0">
-                Datos del mes de
-                {{ request('mostrar_mes') ? Carbon::parse(request('mostrar_mes'))->translatedFormat('F Y') : Carbon::parse($ultimo_mes->fecha_periodo)->translatedFormat('F Y') }}
-            </h6>
-        </div>
-
-        <div class="col-6 col-md-3 col-xxl-2 {{ $ultimo_mes->id_movimiento }}">
-            @if ($campo_comentario)
+        <div class="col-8 col-md-6 col-xxl-4 {{ $ultimo_mes->id_movimiento }}">
             <button type="button"
                     class="w-100 border-0 bg-transparent p-0"
                     data-mdb-ripple-init
                     data-mdb-modal-init
                     data-mdb-target="#modal_info_extra">
-            @endif
 
                 <div class="card h-100 {{ $semaforo }}">
-                    <div class="card-body py-2 text-center">
-                        <div class="fw-bold text-white">
+                    <div class="card-body py-2 text-center h5">
+                        <div class="fw-bold text-white ">
                             @if ($campo_comentario)
                                 <i class="fa-solid fa-circle-info me-1"></i>
                             @endif
                             {{ $ultimo_mes->nombre_campo }}
                         </div>
 
-                        <div class="fw-bold text-white fs-5">
+                        <div class="fw-bold text-white fs-1">
                             @if($indicador->unidad_medida === 'pesos')
                                 ${{ number_format($ultimo_mes->informacion_campo, 2) }}
                             @elseif($indicador->unidad_medida === 'porcentaje')
@@ -280,73 +272,21 @@ else{
                             @endif
                         </div>
 
-                        <div class="text-white text-capitalize small fw-semibold">
+                        <div class="text-white text-capitalize small fw-semibold fs-2">
                             {{ Carbon::parse($ultimo_mes->fecha_periodo)->translatedFormat('F Y') }}
                         </div>
+
+
                     </div>
                 </div>
-
-            @if ($campo_comentario)
             </button>
-            @endif
         </div>
     </div>
 
-    <div class="row justify-content-center g-3 mt-3">
-
-        <div class="col-12 text-center">
-            <h6 class="text-muted fw-bold mb-0">Otros datos del mes</h6>
-        </div>
-
-        @forelse ($campos_llenos as $campo_lleno)
-            @if ($campo_lleno->nombre_campo == "Registro")
-                @php
-                    $nombre_registro = $campo_lleno->nombre_campo;
-                    $registro = $campo_lleno->informacion_campo;
-                @endphp
-            @elseif ($campo_lleno->final == "on" || $campo_lleno->nombre_campo == 'comentario')
-            @else
-                <div class="col-6 col-md-3 col-xxl-2">
-                    <div class="card h-100 bg-light border-0 shadow-sm">
-                        <div class="card-body py-2 text-center">
-                            <div class="fw-bold text-dark">
-                                {{ $campo_lleno->nombre_campo }}
-                            </div>
-                            <div class="fw-bold text-primary fs-5">
-                                @if($campo_lleno->unidad_medida === 'pesos')
-                                    $ {{ number_format($campo_lleno->informacion_campo, 2) }}
-                                @elseif($campo_lleno->unidad_medida === 'porcentaje')
-                                    {{ number_format($campo_lleno->informacion_campo, 2) }} %
-                                @elseif($campo_lleno->unidad_medida === 'dias')
-                                    {{ number_format($campo_lleno->informacion_campo, 2) }} Días
-                                @elseif($campo_lleno->unidad_medida === 'toneladas')
-                                    {{ number_format($campo_lleno->informacion_campo, 2) }} Ton.
-                                @else
-                                    {{ round($campo_lleno->informacion_campo, 2) }}
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @endif
-        @empty
-        @endforelse
-
-        @if ($nombre_registro)
-            <div class="col-12 d-flex align-items-center justify-content-between small fw-bold text-muted py-2">
-                <span class="text-start">
-                    <i class="fa fa-edit"></i>
-                    {{ $nombre_registro }}: {{ $registro }}
-                </span>
-            </div>
-        @endif
-
-    </div>
 </div>
 
-@if ($campo_comentario)
 <div class="modal fade" id="modal_info_extra" tabindex="-1" aria-labelledby="modalInfoExtraLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
+  <div class="modal-dialog modal-fullscreen modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white py-3">
         <h5 class="modal-title" id="modalInfoExtraLabel">
@@ -357,8 +297,60 @@ else{
         </h5>
         <button type="button" class="btn-close" data-mdb-ripple-init data-mdb-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body ck-content">
-        {!! $campo_comentario->informacion_campo !!}
+      <div class="modal-body">
+
+        <div class="row justify-content-center g-3">
+
+            @forelse ($campos_llenos as $campo_lleno)
+                @if ($campo_lleno->nombre_campo == "Registro")
+                    @php
+                        $nombre_registro = $campo_lleno->nombre_campo;
+                        $registro = $campo_lleno->informacion_campo;
+                    @endphp
+                @elseif ($campo_lleno->final == "on" || $campo_lleno->nombre_campo == 'comentario' || empty($campo_lleno->unidad_medida) || $campo_lleno->unidad_medida === 'unidad')
+                @else
+                    <div class="col-6 col-md-3 col-xxl-2">
+                        <div class="card h-100 bg-light border-0 shadow-sm">
+                            <div class="card-body py-2 text-center">
+                                <div class="fw-bold text-dark">
+                                    {{ $campo_lleno->nombre_campo }}
+                                </div>
+                                <div class="fw-bold text-primary fs-5">
+                                    @if($campo_lleno->unidad_medida === 'pesos')
+                                        $ {{ number_format($campo_lleno->informacion_campo, 2) }}
+                                    @elseif($campo_lleno->unidad_medida === 'porcentaje')
+                                        {{ number_format($campo_lleno->informacion_campo, 2) }} %
+                                    @elseif($campo_lleno->unidad_medida === 'dias')
+                                        {{ number_format($campo_lleno->informacion_campo, 2) }} Días
+                                    @elseif($campo_lleno->unidad_medida === 'toneladas')
+                                        {{ number_format($campo_lleno->informacion_campo, 2) }} Ton.
+                                    @else
+                                        {{ round($campo_lleno->informacion_campo, 2) }}
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            @empty
+            @endforelse
+
+            @if ($nombre_registro)
+                <div class="col-12 d-flex align-items-center justify-content-between small fw-bold text-muted py-2">
+                    <span class="text-start">
+                        <i class="fa fa-edit"></i>
+                        {{ $nombre_registro }}: {{ $registro }}
+                    </span>
+                </div>
+            @endif
+
+        </div>
+
+        @if ($campo_comentario)
+            <div class="ck-content mt-4">
+                {!! $campo_comentario->informacion_campo !!}
+            </div>
+        @endif
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-mdb-ripple-init data-mdb-dismiss="modal">Cerrar</button>
@@ -366,7 +358,6 @@ else{
     </div>
   </div>
 </div>
-@endif
 
 @else
 
@@ -481,19 +472,6 @@ else{
 
                 </div>
 
-                <div class="col-12 p-1 bg-white mt-3 p-3">
-                    <h4>{{ request('campos_a_graficar') ? request('campos_a_graficar') : 'Gráfico de Tendencia'  }} |
-
-                        {!!  
-                            empty($indicador->planta)
-                                ? "<i class='fa-solid fa-circle-exclamation'></i> Sin asignación"
-                                : ($tipos[strtolower($indicador->planta)] 
-                                    ?? " <i class='fa-solid fa-industry'></i> Planta {$indicador->planta}")
-                        !!}
-                        
-                    </h4>
-                    <canvas id="graficoLine"></canvas>
-                </div>
 
                 <div class="col-12 p-1 bg-white mt-3 p-3">
 
@@ -516,16 +494,37 @@ else{
 
         <div class="col-12 col-sm-12 col-md-9 col-lg-6 ">
 
+            <div class="row justify-content-center  border ms-1 bg-white mt-3">
 
-            <div class="row justify-content-center border ms-1">
-                <div class="col-12 bg-white mt-3 p-3 shadow-sm">
+                <div class="col-12 p-1 bg-white m-3 p-2">
+                    <h4>{{ request('campos_a_graficar') ? request('campos_a_graficar') : 'Gráfico de Tendencia'  }} |
+
+                        {!!  
+                            empty($indicador->planta)
+                                ? "<i class='fa-solid fa-circle-exclamation'></i> Sin asignación"
+                                : ($tipos[strtolower($indicador->planta)] 
+                                    ?? " <i class='fa-solid fa-industry'></i> Planta {$indicador->planta}")
+                        !!}
+                        
+                    </h4>
+                    <canvas id="graficoLine"></canvas>
+                </div>
+
+            </div>
+
+
+
+
+            <div class="row justify-content-center border ms-1 bg-white mt-3">
+                <div class="col-12  mt-3 p-3 shadow-sm">
                     <div class="row">
-                        <div class="col-12 my-2">
+
+                        <div class="col-12 my-2 ">
                             <h6 class="fw-bold">
                                 <i class="fa-solid fa-calendar"></i>
                                 Promedios Anuales
                             </h6>
-                            <span>
+                            <span >
                             {{ request('campos_a_graficar') ? request('campos_a_graficar') : ''  }}                                
                                 {!!  
                                     empty($indicador->planta)
@@ -535,6 +534,7 @@ else{
                                 !!}                                
                             </span>
                         </div>
+
 
                             @forelse ($promedios as $promedio)
                                 <div class="col-12 col-sm-6 col-md-5 col-lg-4 mt-1">
@@ -1122,12 +1122,17 @@ document.addEventListener("DOMContentLoaded", function () {
         : datos.filter(d => d.referencia === "on");
 
 
-    const labels = [...new Set(
-        datosFinal.map(item => {
-            const fecha = new Date(item.fecha_periodo);
-            return `${mesesES[fecha.getMonth()]} ${fecha.getFullYear()}`;
-        })
-    )];
+    const fechasGrafica = datosFinal.map(item => new Date(item.fecha_periodo));
+    const idxPrimerMes = fechasGrafica.length
+        ? Math.min(...fechasGrafica.map(f => f.getFullYear() * 12 + f.getMonth()))
+        : new Date().getFullYear() * 12;
+    const idxUltimoMes = fechasGrafica.length
+        ? Math.max(...fechasGrafica.map(f => f.getFullYear() * 12 + f.getMonth()))
+        : new Date().getFullYear() * 12 + new Date().getMonth();
+    const labels = [];
+    for (let i = idxPrimerMes; i <= idxUltimoMes; i++) {
+        labels.push(`${mesesES[i % 12]} ${Math.floor(i / 12)}`);
+    }
 
 
 
@@ -1308,14 +1313,27 @@ document.addEventListener("DOMContentLoaded", function () {
             parseFloat(item.informacion_campo);
     });
 
+    const COLORES_REFERENCIA = [
+        'rgba(51, 102, 255, 1)',
+        'rgba(255, 159, 64, 1)',
+        'rgba(0, 150, 136, 1)',
+        'rgba(156, 39, 176, 1)',
+        'rgba(255, 193, 7, 1)',
+        'rgba(0, 188, 212, 1)',
+        'rgba(76, 175, 80, 1)',
+        'rgba(63, 81, 181, 1)',
+        'rgba(205, 220, 57, 1)',
+        'rgba(121, 85, 72, 1)'
+    ];
+
     const datasetsReferencias = Object.keys(referenciasAgrupadas).map((nombre, index) => ({
         type: "line",
         label: nombre,
         data: labels.map(label => referenciasAgrupadas[nombre][label] ?? null),
         borderWidth: 3,
-        tension: 0.1,
+        tension: 0,
         fill: false,
-        borderColor: `rgba(${50 + index * 60}, 120, 255, 1)`,
+        borderColor: COLORES_REFERENCIA[index % COLORES_REFERENCIA.length],
         spanGaps: true,
         order: 10
     }));
@@ -1402,15 +1420,7 @@ datasets: [
 
             plugins: {
                 legend: {
-                    display: true,
-                    labels: {
-                        filter: function(item, chart) {
-
-                            const dataset = chart.datasets[item.datasetIndex];
-
-                            return dataset.type !== 'bar'; 
-                        }
-                    }
+                    display: true
                 },
                 datalabels: {
                     display: context => context.dataset.type === 'bar',
@@ -1467,12 +1477,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const todosDatos = [...datosFinal];
 
-    const labels = [...new Set(
-        todosDatos.map(item => {
-            const fecha = new Date(item.fecha_periodo);
-            return `${mesesES[fecha.getMonth()]} ${fecha.getFullYear()}`;
-        })
-    )];
+    const fechasTendencia = todosDatos.map(item => new Date(item.fecha_periodo));
+    const idxPrimerMes = fechasTendencia.length
+        ? Math.min(...fechasTendencia.map(f => f.getFullYear() * 12 + f.getMonth()))
+        : new Date().getFullYear() * 12;
+    const idxUltimoMes = fechasTendencia.length
+        ? Math.max(...fechasTendencia.map(f => f.getFullYear() * 12 + f.getMonth()))
+        : new Date().getFullYear() * 12 + new Date().getMonth();
+    const labels = [];
+    for (let i = idxPrimerMes; i <= idxUltimoMes; i++) {
+        labels.push(`${mesesES[i % 12]} ${Math.floor(i / 12)}`);
+    }
 
     // ============================
     // METAS
@@ -1598,7 +1613,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     label: nombreCampo,
                     data: dataValores,
                     borderWidth: 3,
-                    tension: 0.2,
+                    tension: 0,
                     fill: true,
                     backgroundColor:"rgba(54, 162, 235, .15)",
                     borderColor: MODO_DINAMICO 
@@ -1710,12 +1725,17 @@ document.addEventListener("DOMContentLoaded", function () {
         ? datos 
         : datos.filter(d => d.final === "on");
 
-    window.labels = [...new Set(
-        datosFinal.map(item => {
-            const fecha = new Date(item.fecha_periodo);
-            return `${mesesES[fecha.getMonth()]} ${fecha.getFullYear()}`;
-        })
-    )];
+    const fechasGlobal = datosFinal.map(item => new Date(item.fecha_periodo));
+    const idxPrimerMes = fechasGlobal.length
+        ? Math.min(...fechasGlobal.map(f => f.getFullYear() * 12 + f.getMonth()))
+        : new Date().getFullYear() * 12;
+    const idxUltimoMes = fechasGlobal.length
+        ? Math.max(...fechasGlobal.map(f => f.getFullYear() * 12 + f.getMonth()))
+        : new Date().getFullYear() * 12 + new Date().getMonth();
+    window.labels = [];
+    for (let i = idxPrimerMes; i <= idxUltimoMes; i++) {
+        window.labels.push(`${mesesES[i % 12]} ${Math.floor(i / 12)}`);
+    }
 
     window.VARIACION_ON = "{{ $indicador->variacion }}" === "on";
 

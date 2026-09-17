@@ -54,7 +54,7 @@ Route::get('/perfil_usuario/encuestas_clientes/encuesta/{encuesta}', [userContro
 
 // Route::get('/perfil_usuario/cuencuestas_clientes/respuestas/{encuesta}', [userController::class, 'show_respuestas_usuario'])->name('show.respuestas.usuario');
 
-Route::get('/perfil_usuario/encuestas/respuestas_clientes/{cliente}/{encuesta}', [userController::class, 'show_respuestas_usuario'])->name('show.respuestas.usuario')->middleware('auth');
+Route::get('/perfil_usuario/encuestas/respuestas_clientes/{cliente}/{encuesta}/{contestacion?}', [userController::class, 'show_respuestas_usuario'])->name('show.respuestas.usuario')->middleware('auth');
 
 
 // aqui van a estar las rutas para el fucking llenado de indicadores
@@ -127,6 +127,11 @@ Route::get('/perfil_admin/agregar_indicadores/indicador/{indicador}', [indicador
 Route::delete('/perfil_admin/agregar_indicadores/{indicador}', [indicadorController::class, 'borrar_indicador'])->name('borrar.indicador')->middleware('auth:admin');
 
 Route::patch('/perfil_admin/agregar_indicadores/editando_indicador/{indicador}', [indicadorController::class, 'indicador_edit'])->name('indicador.edit')->middleware('auth:admin');
+
+//Rutas de las configuraciones del admin
+Route::get('/perfil_admin/configuraciones_llenado', [adminController::class, 'configuraciones_llenado'])->name('configuraciones.llenado')->middleware('auth:admin');
+
+Route::post('/perfil_admin/configuraciones_llenado', [adminController::class, 'configuraciones_llenado_update'])->name('configuraciones.llenado.update')->middleware('auth:admin');
 
 
 
@@ -215,7 +220,7 @@ Route::get('/perfil_admin/informacion_foranea', [informacionForaneaController::c
 Route::delete('/perfil_admin/informacion_foranea/borrar/{campoForaneo}', [informacionForaneaController::class, 'destroy'])->name('informacion.foranea.delete')->middleware('auth:admin');
 Route::delete('/perfil_admin/informacion_foranea/borrar_todo', [informacionForaneaController::class, 'destroyAll'])->name('informacion.foranea.delete.all')->middleware('auth:admin');
 
-Route::get('/perfil_admin/encuestas/respuestas_clientes/{cliente}/{encuesta}', [clienteController::class, 'show_respuestas'])->name('show.respuestas')->middleware('auth:admin');
+Route::get('/perfil_admin/encuestas/respuestas_clientes/{cliente}/{encuesta}/{contestacion?}', [clienteController::class, 'show_respuestas'])->name('show.respuestas')->middleware('auth:admin');
 
 Route::get('perfil_admin/lista_indicadores/encuesta/{encuesta}', [encuestaController::class, 'encuesta_llena_show_admin'] )->name('encuesta.llena.show.admin')->middleware('auth:admin');
 
@@ -344,6 +349,9 @@ Route::post('/perfil_cliente', [userController::class, 'cerrar_session_cliente']
 //Ruta para el eliminado de la info del indicador
 Route::delete('perfil_usuario/indicador/eliminar_info/{id}', [indicadorController::class, 'borrar_info_indicador'])->name('borrar.info.indicador')->middleware('auth');
 
+//Ruta para el eliminado de la info del indicador (vista robusta, requiere credenciales de admin)
+Route::delete('perfil_usuario/indicador_robusto/eliminar_info_admin/{id}', [indicadorController::class, 'borrar_info_indicador_admin'])->name('borrar.info.indicador.admin')->middleware('auth');
+
 
 //Ruta para mostrar la visualizacion de las encuestas
 Route::get('perfil_usuario/encuestas_clientes_user', [encuestaController::class, 'ver_encuestas_user'])->name('ver.encuestas.user')->middleware('auth');
@@ -359,6 +367,7 @@ Route::post('perfil_usuario/encuestas_clientes_user/contestando/{encuesta}', [cl
 
 //escudriñando la informacion que se da en el indicador
 Route::get('perfil_admin/lista_indicadores/escudriñando_indicador/{indicador}', [indicadorController::class, 'analizar_indicador'])->name('analizar.indicador')->middleware("auth:admin");
+
 Route::get('perfil_admin/lista_indicadores/escudriñando_indicador/{indicador}/cruzados-vista', [indicadorController::class, 'analizar_cruzados_vista'])->name('analizar.cruzados.vista')->middleware("auth:admin");
 Route::post('perfil_admin/lista_indicadores/escudriñando_indicador/{indicador}/cruzados', [indicadorController::class, 'guardar_cruzados'])        ->name('guardar.cruzados')->middleware("auth:admin");
 
@@ -378,6 +387,14 @@ Route::get('perfil_admin/lista_indicadores/escudriñando_indicador/{indicador}/c
 //Rutas de el escudriño de datos pero ahora desde la vista de los usuarios
 Route::get('perfil_usuario/analizando_datos/{indicador}', [indicadorController::class, 'analizar_indicador_usuario'])->name('analizar.indicador.usuario');
 
+Route::get('perfil_usuario/analizando_datos/{indicador}/comparar', [indicadorController::class, 'comparar_indicador_usuario'])->name('comparar.indicador.usuario')->middleware('auth');
+
+//Rutas del chat con IA para los usuarios (restringido a indicadores del departamento + foráneos)
+Route::get('perfil_usuario/analizando_datos/{indicador}/ia', [indicadorController::class, 'analizar_cruzados_vista_usuario'])->name('analizar.cruzados.vista.usuario')->middleware('auth');
+Route::match(['GET', 'POST'], 'perfil_usuario/analizando_datos/{indicador}/ia/analizar', [indicadorController::class, 'analizar_cruzados_ia_usuario'])->name('analizar.cruzados.ia.usuario')->middleware('auth');
+Route::get('perfil_usuario/analizando_datos/{indicador}/ia/chats', [indicadorController::class, 'chats_ia_lista_usuario'])->name('chats.ia.lista.usuario')->middleware('auth');
+Route::get('perfil_usuario/analizando_datos/{indicador}/ia/chats/{chatId}', [indicadorController::class, 'chat_ia_mensajes_usuario'])->name('chat.ia.mensajes.usuario')->middleware('auth');
+Route::delete('perfil_usuario/analizando_datos/{indicador}/ia/chats/{chatId}', [indicadorController::class, 'eliminar_chat_ia_usuario'])->name('chat.ia.eliminar.usuario')->middleware('auth');
 
 
 //Rutas que me llevan a los KPI con las fechas que se dan en el panle de las perspectivas

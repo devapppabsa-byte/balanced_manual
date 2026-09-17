@@ -145,6 +145,14 @@
             <span>Logs</span>
         </a>
     </div>
+
+    <div class="col-auto">
+        <a href="{{ route('configuraciones.llenado') }}"
+        class="admin-link {{ request()->routeIs('configuraciones.llenado') ? 'active' : '' }}">
+            <i class="fa-solid fa-gear"></i>
+            <span>Configuraciones</span>
+        </a>
+    </div>
             
 
 

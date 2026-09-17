@@ -138,7 +138,17 @@
         
                         </div>
 
-
+                        <div>
+                            <label class="form-label small text-muted fw-semibold mb-1">&nbsp;</label>
+                            <a href="{{ route('comparar.indicador.usuario', $indicador->id) }}" class="btn btn-primary px-4">
+                                <i class="fa-solid fa-scale-balanced me-1"></i>
+                                Comparar con otro indicador
+                            </a>
+                            <a href="{{ route('analizar.cruzados.vista.usuario', $indicador->id) }}" class="btn btn-dark px-4" style="display: none;">
+                                <i class="fa-solid fa-robot me-1"></i>
+                                Análisis con IA
+                            </a>
+                        </div>
 
                     </div>
                     {{-- <button type="submit" id="btn-trigger-form" style="display: none;"></button> --}}
@@ -154,6 +164,7 @@
 
 @php
     $semaforo="";
+    $campo_comentario = $campos_llenos->firstWhere('nombre_campo', 'comentario');
     if($indicador->tipo_indicador == "riesgo"){
 
         if($indicador->meta_esperada <= $ultimo_mes->informacion_campo){
@@ -181,7 +192,7 @@
 
 
 <!-- Modal -->
-<div class="modal fade" id="campos_indicador" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade" id="modal_info_extra" tabindex="-1" aria-labelledby="modalInfoExtraLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-centered">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
@@ -281,21 +292,46 @@
 
 
 <div class="container-fluid mt-3">
-    <div class="row justify-content-center">
-        <div class="col-10">
+    <div class="row justify-content-center mt-3">
+        <div class="col-12">
+            <div class="row justify-content-center">
+                <div class="col-3 text-center my-1">
+                    <h6 class="py-1 text-dark bg-white p-0 rounded-pill fw-bolder">
+                        <i class="fa-solid fa-bullseye text-danger"></i>
+                        {{ ($indicador->tipo_indicador == 'normal') ? 'Meta' : 'Limite' }}
+                        @if($indicador->unidad_medida === 'pesos')
+                            $ {{ $indicador->meta_esperada }}
+                        @elseif($indicador->unidad_medida === 'porcentaje')
+                            {{ $indicador->meta_esperada }}%
+                        @elseif($indicador->unidad_medida === 'dias')
+                            {{ $indicador->meta_esperada }} Días
+                        @elseif($indicador->unidad_medida === 'toneladas')
+                            {{ $indicador->meta_esperada }} Ton.
+                        @else
+                            {{ $indicador->meta_esperada }}
+                        @endif
+                    </h6>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-8 col-md-6 col-xxl-4 {{ $ultimo_mes->id_movimiento }}">
             <button type="button"
                     class="w-100 border-0 bg-transparent p-0"
                     data-mdb-ripple-init
                     data-mdb-modal-init
-                    data-mdb-target="#campos_indicador">
+                    data-mdb-target="#modal_info_extra">
 
-                <div class="card {{ $semaforo }}">
-                    <div class="card-body py-1">
-                        <h4 class="text-center fw-bold text-white">
+                <div class="card h-100 {{ $semaforo }}">
+                    <div class="card-body py-2 text-center h5">
+                        <div class="fw-bold text-white">
+                            @if ($campo_comentario)
+                                <i class="fa-solid fa-circle-info me-1"></i>
+                            @endif
                             {{ $ultimo_mes->nombre_campo }}
-                        </h4>
+                        </div>
 
-                        <h1 class="text-center fw-bold text-white">
+                        <div class="fw-bold text-white fs-1">
                             @if($indicador->unidad_medida === 'pesos')
                                 ${{ number_format($ultimo_mes->informacion_campo, 2) }}
                             @elseif($indicador->unidad_medida === 'porcentaje')
@@ -307,16 +343,15 @@
                             @else
                                 {{ round($ultimo_mes->informacion_campo, 2) }}
                             @endif
-                        </h1>
+                        </div>
 
-                        <h5 class="text-center fw-bold text-white text-capitalize">
+                        <div class="text-white text-capitalize small fw-semibold fs-2">
                             {{ Carbon::parse($ultimo_mes->fecha_periodo)->translatedFormat('F Y') }}
-                        </h5>
+                        </div>
                     </div>
                 </div>
             </button>
         </div>
-            
     </div>
 </div>
 
@@ -365,7 +400,7 @@
     <div class="row justify-content-center px-2">
 
 
-        <div class="col-12 col-sm-12 col-md-12 col-lg-5">
+        <div class="col-12 col-sm-12 col-md-12 col-lg-6">
             <div class="row">
 
                 <div class="col-12 p-1 bg-white mt-3 p-3">
@@ -394,20 +429,6 @@
                 </div>
 
                 <div class="col-12 p-1 bg-white mt-3 p-3">
-                    <h4>{{ request('campos_a_graficar') ? request('campos_a_graficar') : 'Gráfico de Tendencia'  }} |
-
-                        {!!  
-                            empty($indicador->planta)
-                                ? "<i class='fa-solid fa-circle-exclamation'></i> Sin asignación"
-                                : ($tipos[strtolower($indicador->planta)] 
-                                    ?? " <i class='fa-solid fa-industry'></i> Planta {$indicador->planta}")
-                        !!}
-                        
-                    </h4>
-                    <canvas id="graficoLine"></canvas>
-                </div>
-
-                <div class="col-12 p-1 bg-white mt-3 p-3">
 
                     <h4>{{ request('campos_a_graficar') ? request('campos_a_graficar') : 'Gráfico de Dona'  }} |
 
@@ -426,7 +447,24 @@
         </div>
 
 
-        <div class="col-12 col-sm-12 col-md-9 col-lg-5 ">
+        <div class="col-12 col-sm-12 col-md-9 col-lg-6 ">
+
+
+            <div class="row justify-content-center border ms-1">
+                <div class="col-12 p-1 bg-white mt-3 p-3">
+                    <h4>{{ request('campos_a_graficar') ? request('campos_a_graficar') : 'Gráfico de Tendencia'  }} |
+
+                        {!!  
+                            empty($indicador->planta)
+                                ? "<i class='fa-solid fa-circle-exclamation'></i> Sin asignación"
+                                : ($tipos[strtolower($indicador->planta)] 
+                                    ?? " <i class='fa-solid fa-industry'></i> Planta {$indicador->planta}")
+                        !!}
+                        
+                    </h4>
+                    <canvas id="graficoLine"></canvas>
+                </div>
+            </div>
 
 
             <div class="row justify-content-center border ms-1">
@@ -952,170 +990,6 @@
 
 
 
-        <div class="col-12 col-sm-12 col-md-3 col-lg-2">
-            <div class="row justify-content-center border ms-1">
-
-                {{-- TENDENCIA --}}
-                <div class="col-12 bg-white mt-3 p-3">
-                    <div class="p-2 border rounded h-100">
-
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong>Tendencia</strong>
-                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalTendencia">
-                                <i class="fa fa-circle-info"></i>
-                            </button>
-                        </div>
-
-                        <div class="mt-2">
-                            <span class="badge bg-info me-1">{{ $resultado['tendencia'] }}</span>
-                            <span class="badge bg-dark">{{ $resultado['fuerza_tendencia'] }}</span>
-                        </div>
-
-                        <small class="text-muted d-block mt-2">
-                            Indica la dirección del indicador y qué tan confiable es la tendencia según su comportamiento.
-                        </small>
-
-                    </div>
-                </div>
-
-                {{-- CAMBIO --}}
-                <div class="col-12 bg-white p-3">
-                    <div class="p-2 border rounded h-100">
-
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong>Cambio</strong>
-                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalCambio">
-                                <i class="fa fa-circle-info"></i>
-                            </button>
-                        </div>
-
-                        <div class="mt-2 fw-bold">
-                            {{ number_format($resultado['cambio'], 2) }}
-                            <span class="text-muted">
-                                ({{ number_format($resultado['cambio_porcentual'], 2) }}%)
-                            </span>
-                        </div>
-
-                        <small class="text-muted d-block mt-2">
-                            Diferencia entre el valor inicial y el actual en el periodo analizado.
-                        </small>
-
-                    </div>
-                </div>
-
-                {{-- ESTADO --}}
-                <div class="col-12 bg-white p-3">
-                    <div class="p-2 border rounded h-100">
-
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong>Estado actual</strong>
-                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalEstado">
-                                <i class="fa fa-circle-info"></i>
-                            </button>
-                        </div>
-
-                        <div class="mt-2">
-                            <span class="badge {{ $resultado['cumplimiento'] == 'en meta' ? 'bg-success' : 'bg-danger' }}">
-                                {{ $resultado['cumplimiento'] }}
-                            </span>
-                        </div>
-
-                        <small class="text-muted d-block mt-2">
-                            Evalúa si el valor más reciente cumple con la meta establecida.
-                        </small>
-
-                    </div>
-                </div>
-
-                {{-- HISTORICO --}}
-                <div class="col-12 bg-white p-3">
-                    <div class="p-2 border rounded h-100">
-
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong>Histórico</strong>
-                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalHistorico">
-                                <i class="fa fa-circle-info"></i>
-                            </button>
-                        </div>
-
-                        <div class="mt-2">
-                            <span class="badge bg-secondary">{{ $resultado['estado_historico'] }}</span>
-                            <span class="text-muted ms-1">
-                                ({{ number_format($resultado['porcentaje_cumplimiento'], 0) }}%)
-                            </span>
-                        </div>
-
-                        <small class="text-muted d-block mt-2">
-                            Muestra qué tan frecuentemente el indicador ha cumplido la meta en el tiempo.
-                        </small>
-
-                    </div>
-                </div>
-
-                {{-- ESTABILIDAD --}}
-                {{-- <div class="col-6 col-sm-4 col-md-3 col-lg-2 bg-white p-3">
-                    <div class="p-2 border rounded h-100">
-
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong>Estabilidad</strong>
-                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalEstabilidad">
-                                <i class="fa fa-circle-info"></i>
-                            </button>
-                        </div>
-
-                        <div class="mt-2">
-                            <span class="badge bg-warning text-dark">{{ $resultado['estabilidad'] }}</span>
-                        </div>
-
-                        <small class="text-muted d-block mt-2">
-                            Indica qué tanto varía el indicador; valores altos implican mayor fluctuación.
-                        </small>
-
-                    </div>
-                </div> --}}
-
-
-                {{-- PROYECCION --}}
-                <div class="col-12 bg-white p-3">
-                    <div class="p-2 border rounded h-100">
-
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong>Proyección siguiente</strong>
-                            <button class="btn btn-sm btn-light p-1" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#modalProyeccion">
-                                <i class="fa fa-circle-info"></i>
-                            </button>
-                        </div>
-
-                        <div class="mt-2 fw-bold">
-                            @if($indicador->unidad_medida === 'pesos')
-                                ${{ number_format($resultado['proyeccion_siguiente'], 2) }}
-
-                            @elseif($indicador->unidad_medida === 'porcentaje')
-                                {{ number_format($resultado['proyeccion_siguiente'], 2) }}%
-
-                            @elseif($indicador->unidad_medida === 'dias')
-                                {{ number_format($resultado['proyeccion_siguiente'], 2) }} Días
-
-                            @elseif($indicador->unidad_medida === 'toneladas')
-                                {{ number_format($resultado['proyeccion_siguiente'], 2) }} Ton.
-
-                            @else
-                                {{ number_format($resultado['proyeccion_siguiente'], 2) }}
-                            @endif
-
-                        </div>
-
-                        <small class="text-muted d-block mt-2">
-                            Estimación del próximo valor basada en la tendencia actual del indicador.
-                        </small>
-
-                    </div>
-                </div>
-
-            </div>
-
-        </div>
-
         @else
 
         <div class="row justify-content-center">
@@ -1174,12 +1048,17 @@ document.addEventListener("DOMContentLoaded", function () {
         : datos.filter(d => d.referencia === "on");
 
 
-    const labels = [...new Set(
-        datosFinal.map(item => {
-            const fecha = new Date(item.fecha_periodo);
-            return `${mesesES[fecha.getMonth()]} ${fecha.getFullYear()}`;
-        })
-    )];
+    const fechasGrafica = datosFinal.map(item => new Date(item.fecha_periodo));
+    const idxPrimerMes = fechasGrafica.length
+        ? Math.min(...fechasGrafica.map(f => f.getFullYear() * 12 + f.getMonth()))
+        : new Date().getFullYear() * 12;
+    const idxUltimoMes = fechasGrafica.length
+        ? Math.max(...fechasGrafica.map(f => f.getFullYear() * 12 + f.getMonth()))
+        : new Date().getFullYear() * 12 + new Date().getMonth();
+    const labels = [];
+    for (let i = idxPrimerMes; i <= idxUltimoMes; i++) {
+        labels.push(`${mesesES[i % 12]} ${Math.floor(i / 12)}`);
+    }
 
 
 
@@ -1516,12 +1395,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const todosDatos = [...datosFinal];
 
-    const labels = [...new Set(
-        todosDatos.map(item => {
-            const fecha = new Date(item.fecha_periodo);
-            return `${mesesES[fecha.getMonth()]} ${fecha.getFullYear()}`;
-        })
-    )];
+    const fechasTendencia = todosDatos.map(item => new Date(item.fecha_periodo));
+    const idxPrimerMes = fechasTendencia.length
+        ? Math.min(...fechasTendencia.map(f => f.getFullYear() * 12 + f.getMonth()))
+        : new Date().getFullYear() * 12;
+    const idxUltimoMes = fechasTendencia.length
+        ? Math.max(...fechasTendencia.map(f => f.getFullYear() * 12 + f.getMonth()))
+        : new Date().getFullYear() * 12 + new Date().getMonth();
+    const labels = [];
+    for (let i = idxPrimerMes; i <= idxUltimoMes; i++) {
+        labels.push(`${mesesES[i % 12]} ${Math.floor(i / 12)}`);
+    }
 
     // ============================
     // METAS
@@ -1759,12 +1643,17 @@ document.addEventListener("DOMContentLoaded", function () {
         ? datos 
         : datos.filter(d => d.final === "on");
 
-    window.labels = [...new Set(
-        datosFinal.map(item => {
-            const fecha = new Date(item.fecha_periodo);
-            return `${mesesES[fecha.getMonth()]} ${fecha.getFullYear()}`;
-        })
-    )];
+    const fechasGlobal = datosFinal.map(item => new Date(item.fecha_periodo));
+    const idxPrimerMes = fechasGlobal.length
+        ? Math.min(...fechasGlobal.map(f => f.getFullYear() * 12 + f.getMonth()))
+        : new Date().getFullYear() * 12;
+    const idxUltimoMes = fechasGlobal.length
+        ? Math.max(...fechasGlobal.map(f => f.getFullYear() * 12 + f.getMonth()))
+        : new Date().getFullYear() * 12 + new Date().getMonth();
+    window.labels = [];
+    for (let i = idxPrimerMes; i <= idxUltimoMes; i++) {
+        window.labels.push(`${mesesES[i % 12]} ${Math.floor(i / 12)}`);
+    }
 
     window.VARIACION_ON = "{{ $indicador->variacion }}" === "on";
 

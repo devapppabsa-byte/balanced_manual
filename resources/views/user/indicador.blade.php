@@ -171,12 +171,21 @@ use Carbon\Carbon;
 
 
                             @else
-                                <div class="col-auto">
-                                    <button class="btn btn-primary btn-sm w-100 {{(Auth::user()->tipo_usuario != "principal") ? 'disabled' : ''  }}" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#llenado_indicadores">
-                                        <i class="fa fa-plus"></i>
-                                        Llenar este Indicador
-                                    </button>
-                                </div>
+                                @if ($bloqueo_llenado === '1')
+                                    <div class="col-auto">
+                                        <button class="btn btn-secondary btn-sm w-100" disabled>
+                                            <i class="fa fa-ban"></i>
+                                            Llenado bloqueado por el admin
+                                        </button>
+                                    </div>
+                                @else
+                                    <div class="col-auto">
+                                        <button class="btn btn-primary btn-sm w-100 {{(Auth::user()->tipo_usuario != "principal") ? 'disabled' : ''  }}" data-mdb-ripple-init data-mdb-modal-init data-mdb-target="#llenado_indicadores">
+                                            <i class="fa fa-plus"></i>
+                                            Llenar este Indicador
+                                        </button>
+                                    </div>
+                                @endif
                             @endif
 
 

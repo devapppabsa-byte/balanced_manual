@@ -192,6 +192,8 @@ class apartadoNormaController extends Controller
 
 public function registro_actividad_cumplimiento_norma(Request $request){
     
+
+    //validacio para que no ejecute nada si no se marco ningun apartado como realizado      
     if(!isset($request->realizada)) {
         return back()->with("error", "Se debe marcar almenos un apartado para marcar cumplimiento");
     }

@@ -64,6 +64,13 @@ class userController extends Controller
         }
 
         else{
+            LogBalanced::create([
+                'autor' => 'Guest',
+                'accion' => "failed_login",
+                'descripcion' => "Intento de inicio de sesión fallido para el usuario: ".$request->email,
+                'ip' => request()->ip()
+            ]);
+
             return back()->with("error", 'Error de usuario o contraseña');
         }
 
@@ -123,8 +130,6 @@ class userController extends Controller
 
 
     //TODO EL DESMADRE DE ARRIBA ES PARA PODER OBTENER LA PONDERACION Y QUE NO SE LLENEN INDICADORES SI LA PONDERACION CAMBIA
-
-
 
 
 //Filtro de fechas para los indicadores
@@ -561,36 +566,52 @@ $meses = collect()
         $preguntas = Pregunta::with('respuestas')->where('id_encuesta', $encuesta->id)->get();
 
 
-        //me ayuda a agregar los clientes que ya respondieron las preguntas
-        $cliente_arr = [];
-        foreach($existe as $cliente ){
-            array_push($cliente_arr, $cliente->id_cliente);
-        }
-        //los clientes que ya contestaron la encuesta.
-        $clientes = Cliente::whereIn('id', $cliente_arr)->get();
+        //Trae las contestaciones de la encuesta (una fila por contestación, incluso si el cliente respondió varias veces)
+        $contestaciones = ClienteEncuesta::with('cliente')
+            ->where('id_encuesta', $encuesta->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        //los clientes que ya contestaron la encuesta (únicos, para el resto de la vista)
+        $clientes = Cliente::whereIn('id', $existe->pluck('id_cliente'))->get();
 
 
 
 
-        //DATOS PARA LA GRAFICA DE LA ENCUESTA
+        //DATOS PARA LA GRAFICA DE LA ENCUESTA (una entrada por contestación)
        $resultados = Respuesta::join('preguntas', 'respuestas.id_pregunta', '=', 'preguntas.id')
                 ->join('clientes', 'respuestas.id_cliente', '=', 'clientes.id')
                 ->where('preguntas.id_encuesta', $encuesta->id)
                 ->where('preguntas.cuantificable', 1)
-                ->groupBy('clientes.id', 'clientes.nombre')
+                ->groupBy('clientes.id', 'clientes.nombre', 'respuestas.created_at')
                 ->select(
                     'clientes.nombre as cliente',
+                    DB::raw('respuestas.created_at as momento'),
                     DB::raw('AVG(respuestas.respuesta) as puntuacion')
                 )
+                ->orderBy('respuestas.created_at', 'desc')
                 ->get();
 
-            $labels  = $resultados->pluck('cliente');
+            $labels  = $resultados->map(fn($r) => $r->cliente . ' (' . Carbon::parse($r->momento)->translatedFormat('d/m/y') . ')');
             $valores = $resultados->pluck('puntuacion')->map(fn($v) => round($v, 2));
         //DATOS PARA LA HGRAFICA DE LA ENCUESTA
 
 
+        //DATOS DE LA GRAFICA SEPARADOS POR SEMESTRE (enero-junio / julio-diciembre)
+        $semestre1 = $resultados->filter(fn($r) => Carbon::parse($r->momento)->month <= 6);
+        $semestre2 = $resultados->filter(fn($r) => Carbon::parse($r->momento)->month >= 7);
 
-        return view('user.detalle_encuesta', compact('resultados', 'existe', 'encuesta', 'preguntas', 'clientes', 'labels', 'valores'));
+        $labels_s1  = $semestre1->map(fn($r) => $r->cliente . ' (' . Carbon::parse($r->momento)->translatedFormat('d/m/y') . ')')->values();
+        $valores_s1 = $semestre1->pluck('puntuacion')->map(fn($v) => round($v, 2))->values();
+        $total_s1   = $semestre1->count();
+
+        $labels_s2  = $semestre2->map(fn($r) => $r->cliente . ' (' . Carbon::parse($r->momento)->translatedFormat('d/m/y') . ')')->values();
+        $valores_s2 = $semestre2->pluck('puntuacion')->map(fn($v) => round($v, 2))->values();
+        $total_s2   = $semestre2->count();
+
+
+
+        return view('user.detalle_encuesta', compact('resultados', 'existe', 'encuesta', 'preguntas', 'contestaciones', 'clientes', 'labels', 'valores', 'labels_s1', 'valores_s1', 'total_s1', 'labels_s2', 'valores_s2', 'total_s2'));
 
 
     }
@@ -641,22 +662,28 @@ $meses = collect()
     // }
 
 
-    public function show_respuestas_usuario(Cliente $cliente, Encuesta $encuesta){
+    public function show_respuestas_usuario(Cliente $cliente, Encuesta $encuesta, ClienteEncuesta $contestacion = null){
 
         $clienteId = $cliente->id;
         $encuestaId = $encuesta->id;
 
+        //si se recibe una contestación específica, se filtran solo sus respuestas
+        $respuestasQuery = function ($q) use ($clienteId, $contestacion) {
+            $q->where('id_cliente', $clienteId);
+            if ($contestacion) {
+                $q->where('created_at', $contestacion->created_at);
+            }
+        };
 
-        $preguntas = Pregunta::with(['respuestas' => function ($q) use ($clienteId) {
-                $q->where('id_cliente', $clienteId);
-            }])
+        $preguntas = Pregunta::with(['respuestas' => $respuestasQuery])
             ->where('id_encuesta', $encuestaId)
             ->where('cuantificable', 1)
             ->get();
 
 
         //se necesitan las respuestas de las encuestas, es decir, consultar las preguntas con su respuesta, todo estom vendra de la tabla auxiliar.
-        return view("user.respuestas_cliente_encuestas", compact('preguntas', 'cliente'));
+        $fecha_contestacion = $contestacion ? Carbon::parse($contestacion->created_at)->translatedFormat('d/m/Y') : null;
+        return view("user.respuestas_cliente_encuestas", compact('preguntas', 'cliente', 'fecha_contestacion'));
 
 
     }

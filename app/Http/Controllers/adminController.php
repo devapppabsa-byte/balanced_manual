@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
+use App\Models\Configuracion;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Validation\Rule;
@@ -62,6 +63,13 @@ class adminController extends Controller
 
 
         else{
+            LogBalanced::create([
+                'autor' => 'Guest',
+                'accion' => "failed_login",
+                'descripcion' => "Intento de inicio de sesión fallido para el administrador: ".$request->email,
+                'ip' => request()->ip()
+            ]);
+
             return back()->with('error', 'Las credenciales no coinciden con los registros');
         }
 
@@ -109,7 +117,7 @@ $departamentos = Departamento::orderby("created_at", "DESC")->get();
         ->selectRaw("
             i.id_departamento,
             i.id as indicador_id,
-            DATE_FORMAT(il.created_at, '%Y-%m') as mes,
+            DATE_FORMAT(il.fecha_periodo, '%Y-%m') as mes,
             AVG(il.informacion_campo) as promedio,
             i.ponderacion
         ")
@@ -147,6 +155,42 @@ $departamentos = Departamento::orderby("created_at", "DESC")->get();
     }
 
 
+
+
+    public function configuraciones_llenado(){
+
+        $bloqueo = Configuracion::valor('bloqueo_llenado_indicadores', '0');
+
+        return view('admin.configuraciones_llenado', compact('bloqueo'));
+
+    }
+
+
+
+
+    public function configuraciones_llenado_update(Request $request){
+
+        $bloqueo = $request->has('bloqueo_llenado') ? '1' : '0';
+
+        Configuracion::updateOrCreate(
+            ['clave' => 'bloqueo_llenado_indicadores'],
+            ['valor' => $bloqueo]
+        );
+
+        $autor = auth()->id();
+
+        LogBalanced::create([
+            'autor' => $autor,
+            'accion' => "update_configuracion",
+            'ip' => request()->ip(),
+            'descripcion' => "Se actualizo la configuracion 'bloqueo_llenado_indicadores' a: " . ($bloqueo === '1' ? 'activado' : 'desactivado'),
+        ]);
+
+        session()->flash('success', 'Configuración actualizada correctamente');
+
+        return redirect()->back();
+
+    }
 
 
 
